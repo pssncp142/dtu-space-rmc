@@ -20,8 +20,8 @@ int main()
   double nofphot,nofbins,probint,offset,theta,phi,L,d;
 
   //initial parameters
-  nofphot = 10000; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.5;
-  theta = 0.2*PI, phi = 0.4*PI;
+  nofphot = 10000; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.25;
+  theta = 0.3*PI; phi = 0.5*PI;
 
   //other calculations and variable definitions
   offset = offset*2*PI;
@@ -59,7 +59,7 @@ int main()
   
   fclose(file);
 
-  system("./realplot.py");
+  //system("./realplot.py");
 
   return 0;
 }
