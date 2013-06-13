@@ -26,10 +26,13 @@ int main()
   for(int i=0; i<nofbin; i++){
     *(cA+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+offset,PI);
     *(cB+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+(offset+1)*PI,PI);
-    *(cC+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+(offset-1)*PI,PI);
-    *(cD+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+(offset-1)*PI,PI);
+    *(cC+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+(offset+2)*PI,PI);
+    *(cD+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+(offset+3)*PI,PI);
     fprintf(file,"%f %f %f %f\n",*(cA+i),*(cB+i),*(cC+i),*(cD+i));
   }
+  fclose(file);
+
+  system("./25mod.py");
 
   return 0;
 }
@@ -37,15 +40,14 @@ int main()
 double sawtooth(double x, double period)
 {
   uint check;
-  if(floor(x/(period))<=0) {
-    check = floor(x/period-1);
+  if(x/(period)<0) {
+    check = floor(x/period);
   } else {
     check = floor(x/period);
   }
-  printf("%f %f %d \n",x/period,floor(x/period),check%4);
-  if (check%3 == 0){
+  if (check%4 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
-  } else if (check%3 == 1 || check%4 ==1){
+  } else if ((check%4 == 1) || (check%4 ==2)){
     return 0;
   } else {
     return (x-(check+3)*period)/period-floor((x-(check+3)*period)/period);

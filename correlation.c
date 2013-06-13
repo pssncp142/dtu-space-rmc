@@ -150,9 +150,9 @@ double sawtooth(double x, double period)
 {
   uint check = floor(x/(2*PI));
   if (check%2 == 0 ){
-    return (x-check*2*PI)/period-floor((x-check*2*PI)/period);
+    return (x-(check)*2*PI)/period-floor((x-(check)*2*PI)/period);
   } else {
-    return -(x-check*2*PI)/period+floor((x-check*2*PI)/period)+1;
+    return -(x-(check)*2*PI)/period+floor((x-(check)*2*PI)/period)+1;
   }
     
 }

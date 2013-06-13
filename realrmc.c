@@ -20,11 +20,11 @@ int main()
   double nofphot,nofbins,probint,offset,theta,phi,L,d;
 
   //initial parameters
-  nofphot = 10000; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.25;
-  theta = 0.3*PI; phi = 0.5*PI;
+  nofphot = 10000; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.5;
+  theta = PI/36; phi = 1.*PI;
 
   //other calculations and variable definitions
-  offset = offset*2*PI;
+  offset = offset*PI;
   double PIL_over_d = PI*L/d;
   double var = nofphot/nofbins;
   double prob[101] = {0};
@@ -47,7 +47,7 @@ int main()
   double countB[lastndx];
   for(int i=0; i<lastndx; i++){
     double rnd = (float)rand()/RAND_MAX;
-    countA[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+offset,2*PI)*randphot[(int) floor(rnd/probint)];
+    countA[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+offset,PI)*randphot[(int) floor(rnd/probint)];
     countB[i] = randphot[(int)floor(rnd/probint)]-countA[i];
   }  
   
@@ -59,18 +59,18 @@ int main()
   
   fclose(file);
 
-  //system("./realplot.py");
+  system("./realplot.py");
 
   return 0;
 }
 
 double sawtooth(double x, double period)
 {
-  uint check = floor(x/(2*PI));
+  uint check = floor(x/(period));
   if (check%2 == 0 ){
-    return (x-check*2*PI)/period-floor((x-check*2*PI)/period);
+    return (x-(check)*PI)/period-floor((x-(check)*PI)/period);
   } else {
-    return -(x-check*2*PI)/period+floor((x-check*2*PI)/period)+1;
+    return -(x-(check+1)*PI)/period+floor((x-(check+1)*PI)/period)+1;
   }
     
 }

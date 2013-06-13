@@ -1,7 +1,6 @@
 /************************************************************
  * Yigit Dallilar 11.06.2013                                *      
- * DTU-Space : Realistic modulation pattern using analytic  *
- * function                                                 *
+ * DTU-Space : 33 perc open grid theoretical modulation     *
  ************************************************************/
 
 #include "math.h"
@@ -26,9 +25,12 @@ int main()
   for(int i=0; i<nofbin; i++){
     *(cA+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+offset,PI);
     *(cB+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+(offset+1)*PI,PI);
-    *(cC+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+(offset-1)*PI,PI);
+    *(cC+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+(offset+2)*PI,PI);
     fprintf(file,"%f %f %f \n",*(cA+i),*(cB+i),*(cC+i));
   }
+  fclose(file);
+
+  system("./33mod.py");
 
   return 0;
 }
@@ -36,12 +38,11 @@ int main()
 double sawtooth(double x, double period)
 {
   uint check;
-  if(floor(x/(period))<=0) {
+  if(x/(period)<0) {
     check = floor(x/period-1);
   } else {
     check = floor(x/period);
   }
-  printf("%f %f %d \n",x/period,floor(x/period),check%3);
   if (check%3 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
   } else if (check%3 == 1){
