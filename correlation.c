@@ -22,7 +22,7 @@ int main()
 
   double max_angle, L, d, offset;
 
-  max_angle = PI/3; L = 50; d = 5; offset = 0.25;
+  max_angle = PI/3; L = 50; d = 5; offset = 0.5;
 
   double k = PI*L/d; offset = 2*PI*offset;
 
@@ -75,9 +75,9 @@ int main()
   file = fopen("realdata.txt","r");
   int ctr = 0;
   for (int i=0; i<nofbin; i++){
-    fscanf(file,"%f %f \n",*real_w+i,(*real_w+i)+1);
-    sum[0] += sum[0] + *(*real_w+i);
-    sum[1] += *((*real_w+i)+1);
+    fscanf(file,"%f %f \n",*(real_w+i),*(real_w+i)+1);
+    sum[0] += **(real_w+i);
+    sum[1] += *(*(real_w+i)+1);
   }
   fclose(file);
   for (int i=0; i<nofbin; i++){
@@ -86,42 +86,35 @@ int main()
   }
 
   file = fopen("A.txt","w+");
+  double max,min;
   double sc_fact[(int)nofgrid][(int)nofgrid];
   for(int i=0; i<nofgrid; i++){
     for(int j=0; j<nofgrid; j++){
       sc_fact[i][j] = 0;
     }
   }
+  
   for(int i=0; i<nofgrid; i++){
     for(int j=0; j<nofgrid; j++){
-      sum[0] =0;
       for(int l=0; l<nofbin; l++){
 	sc_fact[i][j] = sc_fact[i][j] + real_w[l][0]*real_obs[l][0]*model[i][j][l];
       }
-      fprintf(file,"%f ",sc_fact[i][j]);
+      if(i==0 && j==0){
+	max = sc_fact[i][j];
+	min = sc_fact[i][j];
+      } else {
+	if(sc_fact[i][j] > max){max = sc_fact[i][j];}
+	if(sc_fact[i][j] < min){min = sc_fact[i][j];}
+      }
+    }
+  }
+  for(int i=0; i<nofgrid; i++){
+    for(int j=0; j<nofgrid; j++){
+      fprintf(file,"%f ",2*(sc_fact[i][j]-min)/(max-min)-1);
     }
     fprintf(file,"\n");
   }
   fclose(file);
-
-  for(int i=0; i<nofbin; i++){
-    sum[i] = 0;
-  }
-  for(int i=0; i<nofgrid; i++){
-    for(int j=0; j<nofgrid; j++){
-      for(int l=0; l<nofbin; l++){
-	model[i][j][l] = sawtooth(k*tan(theta[i][j])*cos(l*2*PI/256.-phi[i][j])+offset+1,2*PI);
-	sum[l] = sum[l] + model[i][j][l];
-      }
-    }
-  }
-  for(int i=0; i<nofgrid; i++){
-    for(int j=0; j<nofgrid; j++){
-      for(int l=0; l<nofbin; l++){
-	model[i][j][l] = model[i][j][l] - sum[l]/nofbin;
-      }
-    }
-  }
 
   file = fopen("B.txt","w+");
   for(int i=0; i<nofgrid; i++){
@@ -131,11 +124,21 @@ int main()
   }
   for(int i=0; i<nofgrid; i++){
     for(int j=0; j<nofgrid; j++){
-      sum[0] =0;
       for(int l=0; l<nofbin; l++){
-	sc_fact[i][j] = sc_fact[i][j] + real_w[l][1]*real_obs[l][1]*model[i][j][l];
+	sc_fact[i][j] = sc_fact[i][j] - real_w[l][1]*real_obs[l][1]*model[i][j][l];
       }
-      fprintf(file,"%f ",sc_fact[i][j]);
+      if(i==0 && j==0){
+	max = sc_fact[i][j];
+	min = sc_fact[i][j];
+      } else {
+	if(sc_fact[i][j] > max){max = sc_fact[i][j];}
+	if(sc_fact[i][j] < min){min = sc_fact[i][j];}
+      }
+    }
+  }
+  for(int i=0; i<nofgrid; i++){
+    for(int j=0; j<nofgrid; j++){
+      fprintf(file,"%f ",2*(sc_fact[i][j]-min)/(max-min)-1);
     }
     fprintf(file,"\n");
   }
