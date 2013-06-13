@@ -17,10 +17,12 @@ int main()
 {
   //printf("12");
   
-  double max_angle, nofgrid, L, d,  nofbin, offset;
+  const double nofgrid = 256;
+  const double nofbin = 256;
 
-  max_angle = PI/3; nofgrid = 50; L = 50; d = 5;
-  nofbin = 256; offset = 0.25;
+  double max_angle, L, d, offset;
+
+  max_angle = PI/3; L = 50; d = 5; offset = 0.25;
 
   double k = PI*L/d; offset = 2*PI*offset;
 
@@ -40,7 +42,13 @@ int main()
     }
   }
 
-  double model[(int)nofgrid][(int)nofgrid][(int)nofbin];
+  double ***model = (double***)malloc(nofgrid*sizeof(double**));
+  for(int i=0; i<nofgrid; i++){
+    model[i]=(double**)malloc(nofgrid*sizeof(double*));
+    for(int j=0; j<nofbin; j++){
+      model[i][j]=(double*)malloc(nofbin*sizeof(double));
+    }
+  }
   double sum[(int)nofbin];
   for(int i=0; i<nofbin; i++){
     sum[i] = 0;
@@ -62,20 +70,22 @@ int main()
   }
 
   FILE* file;
-  float real_w[(int)nofbin]; float real_obs[(int)nofbin];
+  float real_w[(int)nofbin][2]; float real_obs[(int)nofbin][2];
   float dummy; sum[0] = 0;
   file = fopen("realdata.txt","r");
   int ctr = 0;
   for (int i=0; i<nofbin; i++){
-    fscanf(file,"%f %f \n",real_w+i,&dummy);
-    sum[0] = sum[0] + *(real_w+i);
+    fscanf(file,"%f %f \n",*real_w+i,(*real_w+i)+1);
+    sum[0] += sum[0] + *(*real_w+i);
+    sum[1] += *((*real_w+i)+1);
   }
   fclose(file);
   for (int i=0; i<nofbin; i++){
-    real_obs[i] = real_w[i] - sum[0]/nofbin;
+    real_obs[i][0] = real_w[i][0] - sum[0]/nofbin;
+    real_obs[i][1] = real_w[i][1] - sum[1]/nofbin;
   }
 
-  file = fopen("trial.txt","w+");
+  file = fopen("A.txt","w+");
   double sc_fact[(int)nofgrid][(int)nofgrid];
   for(int i=0; i<nofgrid; i++){
     for(int j=0; j<nofgrid; j++){
@@ -86,7 +96,44 @@ int main()
     for(int j=0; j<nofgrid; j++){
       sum[0] =0;
       for(int l=0; l<nofbin; l++){
-	sc_fact[i][j] = sc_fact[i][j] + real_w[l]*real_obs[l]*model[i][j][l];
+	sc_fact[i][j] = sc_fact[i][j] + real_w[l][0]*real_obs[l][0]*model[i][j][l];
+      }
+      fprintf(file,"%f ",sc_fact[i][j]);
+    }
+    fprintf(file,"\n");
+  }
+  fclose(file);
+
+  for(int i=0; i<nofbin; i++){
+    sum[i] = 0;
+  }
+  for(int i=0; i<nofgrid; i++){
+    for(int j=0; j<nofgrid; j++){
+      for(int l=0; l<nofbin; l++){
+	model[i][j][l] = sawtooth(k*tan(theta[i][j])*cos(l*2*PI/256.-phi[i][j])+offset+1,2*PI);
+	sum[l] = sum[l] + model[i][j][l];
+      }
+    }
+  }
+  for(int i=0; i<nofgrid; i++){
+    for(int j=0; j<nofgrid; j++){
+      for(int l=0; l<nofbin; l++){
+	model[i][j][l] = model[i][j][l] - sum[l]/nofbin;
+      }
+    }
+  }
+
+  file = fopen("B.txt","w+");
+  for(int i=0; i<nofgrid; i++){
+    for(int j=0; j<nofgrid; j++){
+      sc_fact[i][j] = 0;
+    }
+  }
+  for(int i=0; i<nofgrid; i++){
+    for(int j=0; j<nofgrid; j++){
+      sum[0] =0;
+      for(int l=0; l<nofbin; l++){
+	sc_fact[i][j] = sc_fact[i][j] + real_w[l][1]*real_obs[l][1]*model[i][j][l];
       }
       fprintf(file,"%f ",sc_fact[i][j]);
     }
