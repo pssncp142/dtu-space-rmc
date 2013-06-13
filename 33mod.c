@@ -23,7 +23,7 @@ int main()
   
   FILE* file = fopen("33mod.txt","w+");
   for(int i=0; i<nofbin; i++){
-    *(cA+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+offset,PI);
+    *(cA+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+offset*PI,PI);
     *(cB+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+(offset+1)*PI,PI);
     *(cC+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+(offset+2)*PI,PI);
     fprintf(file,"%f %f %f \n",*(cA+i),*(cB+i),*(cC+i));
