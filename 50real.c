@@ -21,7 +21,7 @@ int main()
 
   //initial parameters
   nofphot = 10000; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.5;
-  theta = 0.1*PI; phi = 1.*PI;
+  theta = 0.2*PI; phi = 1.2*PI;
 
   //other calculations and variable definitions
   double PIL_over_d = PI*L/d;

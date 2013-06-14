@@ -24,7 +24,7 @@ int main()
 
   max_angle = PI/3; L = 50; d = 5; offset = 0.5;
 
-  double k = PI*L/d; offset = 2*PI*offset;
+  double k = PI*L/d;
 
   double theta[(int)nofgrid][(int)nofgrid]; double phi[(int)nofgrid][(int)nofgrid];
   for (int i=0; i<nofgrid; i++){
@@ -56,7 +56,7 @@ int main()
   for(int i=0; i<nofgrid; i++){
     for(int j=0; j<nofgrid; j++){
       for(int l=0; l<nofbin; l++){
-	model[i][j][l] = sawtooth(k*tan(theta[i][j])*cos(l*2*PI/256.-phi[i][j])+offset,2*PI);
+	model[i][j][l] = sawtooth(k*tan(theta[i][j])*cos(l*2*PI/256.-phi[i][j])+offset*PI,PI);
 	sum[l] = sum[l] + model[i][j][l];
       }
     }
@@ -72,7 +72,7 @@ int main()
   FILE* file;
   float real_w[(int)nofbin][2]; float real_obs[(int)nofbin][2];
   float dummy; sum[0] = 0;
-  file = fopen("realdata.txt","r");
+  file = fopen("50real.txt","r");
   int ctr = 0;
   for (int i=0; i<nofbin; i++){
     fscanf(file,"%f %f \n",*(real_w+i),*(real_w+i)+1);
@@ -148,13 +148,17 @@ int main()
 
 double sawtooth(double x, double period)
 {
-  uint check = floor(x/(2*PI));
-  if (check%2 == 0 ){
-    return (x-(check)*2*PI)/period-floor((x-(check)*2*PI)/period);
+  uint check;
+  if(x/(period)<0) {
+    check = floor(x/period);
   } else {
-    return -(x-(check)*2*PI)/period+floor((x-(check)*2*PI)/period)+1;
+    check = floor(x/period);
   }
-    
+  if (check%2 == 0){
+    return -(x-check*period)/period+floor((x-check*period)/period)+1;
+  }  else {
+    return (x-(check+2)*period)/period-floor((x-(check+2)*period)/period);
+  }    
 }
 
 double factorial(int k)
