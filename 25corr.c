@@ -21,7 +21,7 @@ int main()
   const double nofbin = 256;
 
   double max_angle, L, d, offset;
-  max_angle = PI/3; L = 50; d = 5; offset = 0.5;
+  max_angle = PI/3; L = 50; d = 5; offset = 0.;
   FILE* file;
   char fname[][10] = {"A.txt","B.txt","C.txt","D.txt"};
   float real_w[(int)nofbin][4]; float real_obs[(int)nofbin][4];
@@ -130,10 +130,12 @@ double sawtooth(double x, double period)
   } else {
     check = floor(x/period);
   }
-  if (check%2 == 0){
+  if (check%4 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
-  }  else {
-    return (x-(check+2)*period)/period-floor((x-(check+2)*period)/period);
+  } else if ((check%4 == 1) || (check%4 ==2)){
+    return 0;
+  } else {
+    return (x-(check+3)*period)/period-floor((x-(check+3)*period)/period);
   }    
 }
 

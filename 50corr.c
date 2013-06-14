@@ -21,7 +21,7 @@ int main()
   const double nofbin = 256;
 
   double max_angle, L, d, offset;
-  max_angle = PI/3; L = 50; d = 5; offset = 0.5;
+  max_angle = PI/3; L = 50; d = 5; offset = 0.;
   FILE* file;
   char fname[][10] = {"A.txt","B.txt"};
   float real_w[(int)nofbin][2]; float real_obs[(int)nofbin][2];
@@ -58,7 +58,7 @@ int main()
   file = fopen("50real.txt","r");
   int ctr = 0;
   for (int i=0; i<nofbin; i++){
-    fscanf(file,"%f %f \n",*(real_w+i),*(real_w+i)+1);
+    fscanf(file,"%f %f\n",*(real_w+i),*(real_w+i)+1);
     sum[0] += **(real_w+i);
     sum[1] += *(*(real_w+i)+1);
   }
@@ -128,9 +128,9 @@ double sawtooth(double x, double period)
   }
   if (check%2 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
-  }  else {
-    return (x-(check+2)*period)/period-floor((x-(check+2)*period)/period);
-  }    
+  } else {
+    return (x-(check+1)*period)/period-floor((x-(check+1)*period)/period);
+  }   
 }
 
 double factorial(int k)

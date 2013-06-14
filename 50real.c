@@ -20,8 +20,8 @@ int main()
   double nofphot,nofbins,probint,offset,theta,phi,L,d;
 
   //initial parameters
-  nofphot = 10000; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.5;
-  theta = 0.2*PI; phi = 1.2*PI;
+  nofphot = 10000; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.;
+  theta = 0.3*PI; phi = 1.2*PI;
 
   //other calculations and variable definitions
   double PIL_over_d = PI*L/d;
@@ -53,8 +53,7 @@ int main()
   file = fopen("50real.txt","w+");
   for(int i=0; i<nofbins; i++){
     fprintf(file,"%f %f\n",countA[i],countB[i]);
-  }
-  
+  }  
   fclose(file);
 
   system("./50real.py");
@@ -72,9 +71,9 @@ double sawtooth(double x, double period)
   }
   if (check%2 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
-  }  else {
-    return (x-(check+2)*period)/period-floor((x-(check+2)*period)/period);
-  }    
+  } else {
+    return (x-(check+1)*period)/period-floor((x-(check+1)*period)/period);
+  }   
 }
 
 double factorial(int k)
