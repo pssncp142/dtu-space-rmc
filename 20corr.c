@@ -21,7 +21,7 @@ int main()
   const double nofbin = 256;
 
   double max_angle, L, d, offset;
-  max_angle = PI/3; L = 50; d = 5; offset = 0.;
+  max_angle = PI/3; L = 50; d = 5; offset = 0.5;
   FILE* file;
   char fname[][10] = {"A.txt","B.txt","C.txt","D.txt","E.txt"};
   float real_w[(int)nofbin][5]; float real_obs[(int)nofbin][5];
@@ -81,7 +81,7 @@ int main()
     for(int i=0; i<nofgrid; i++){
       for(int j=0; j<nofgrid; j++){
 	for(int l=0; l<nofbin; l++){
-	  model[i][j][l] = sawtooth(k*tan(theta[i][j])*cos(l*2*PI/256.-phi[i][j])+(0.4*offset+q)*PI,PI);
+	  model[i][j][l] = sawtooth(k*tan(theta[i][j])*cos(l*2*PI/256.-phi[i][j])+(offset+q)*PI,PI);
 	  sum[l] = sum[l] + model[i][j][l];
 	}
       }

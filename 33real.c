@@ -20,7 +20,7 @@ int main()
   double nofphot,nofbins,probint,offset,theta,phi,L,d;
 
   //initial parameters
-  nofphot = 10000; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.;
+  nofphot = 10000; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.5;
   theta = 0.3*PI; phi = 1.2*PI;
 
   //other calculations and variable definitions
@@ -46,9 +46,9 @@ int main()
   double countC[lastndx];
   for(int i=0; i<lastndx; i++){
     double rnd = (float)rand()/RAND_MAX;
-    countA[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+2/3*offset*PI,PI)*randphot[(int) floor(rnd/probint)];
-    countB[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(2/3*offset+1)*PI,PI)*randphot[(int) floor(rnd/probint)];
-    countC[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(2/3*offset+2)*PI,PI)*randphot[(int) floor(rnd/probint)];
+    countA[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+offset*PI,PI)*randphot[(int) floor(rnd/probint)];
+    countB[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+1)*PI,PI)*randphot[(int) floor(rnd/probint)];
+    countC[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+2)*PI,PI)*randphot[(int) floor(rnd/probint)];
   }  
   
   FILE* file;

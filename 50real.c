@@ -20,7 +20,7 @@ int main()
   double nofphot,nofbins,probint,offset,theta,phi,L,d;
 
   //initial parameters
-  nofphot = 10000; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.;
+  nofphot = 10000; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.5;
   theta = 0.3*PI; phi = 1.2*PI;
 
   //other calculations and variable definitions
