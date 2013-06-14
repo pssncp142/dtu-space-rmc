@@ -23,8 +23,8 @@ int main()
   double max_angle, L, d, offset;
   max_angle = PI/3; L = 50; d = 5; offset = 0.5;
   FILE* file;
-  char fname[][10] = {"A.txt","B.txt"};
-  float real_w[(int)nofbin][2]; float real_obs[(int)nofbin][2];
+  char fname[][10] = {"A.txt","B.txt","C.txt","D.txt"};
+  float real_w[(int)nofbin][4]; float real_obs[(int)nofbin][4];
   double theta[(int)nofgrid][(int)nofgrid]; double phi[(int)nofgrid][(int)nofgrid];
   double sum[(int)nofbin];
   double max,min;
@@ -54,28 +54,32 @@ int main()
     }
   }
 
-  sum[0] = 0; sum[1] = 0;
-  file = fopen("50real.txt","r");
+  sum[0] = 0; sum[1] = 0; sum[2] = 0; sum[3] = 0;
+  file = fopen("25real.txt","r");
   int ctr = 0;
   for (int i=0; i<nofbin; i++){
-    fscanf(file,"%f %f \n",*(real_w+i),*(real_w+i)+1);
+    fscanf(file,"%f %f %f %f\n",*(real_w+i),*(real_w+i)+1,*(real_w+i)+2,*(real_w+i)+3);
     sum[0] += **(real_w+i);
     sum[1] += *(*(real_w+i)+1);
+    sum[2] += *(*(real_w+i)+2);
+    sum[3] += *(*(real_w+i)+3);
   }
   fclose(file);
   for (int i=0; i<nofbin; i++){
     real_obs[i][0] = real_w[i][0] - sum[0]/nofbin;
     real_obs[i][1] = real_w[i][1] - sum[1]/nofbin;
+    real_obs[i][2] = real_w[i][2] - sum[2]/nofbin;
+    real_obs[i][3] = real_w[i][3] - sum[3]/nofbin;
   }
 
-  for(int q=0; q<2; q++){
+  for(int q=0; q<4; q++){
     for(int i=0; i<nofbin; i++){
       sum[i] = 0;
     }
     for(int i=0; i<nofgrid; i++){
       for(int j=0; j<nofgrid; j++){
 	for(int l=0; l<nofbin; l++){
-	  model[i][j][l] = sawtooth(k*tan(theta[i][j])*cos(l*2*PI/256.-phi[i][j])+(offset+q)*PI,PI);
+	  model[i][j][l] = sawtooth(k*tan(theta[i][j])*cos(l*2*PI/256.-phi[i][j])+(0.5*offset+q)*PI,PI);
 	  sum[l] = sum[l] + model[i][j][l];
 	}
       }
