@@ -21,8 +21,9 @@ int main()
   double *cB = (double*)malloc(nofbin*sizeof(double));
   double *cC = (double*)malloc(nofbin*sizeof(double));
   
-  FILE* file = fopen("33mod.txt","w+");
+  FILE* file = fopen("2-33mod.txt","w+");
   for(int i=0; i<nofbin; i++){
+    //*(cA+i) = sawtooth(i*2*PI/nofbin,PI);
     *(cA+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+offset*PI,PI);
     *(cB+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+(offset+1)*PI,PI);
     *(cC+i) = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/nofbin-phi)+(offset+2)*PI,PI);
@@ -30,7 +31,7 @@ int main()
   }
   fclose(file);
 
-  system("./33mod.py");
+  system("./2-33mod.py");
 
   return 0;
 }
@@ -46,8 +47,8 @@ double sawtooth(double x, double period)
   if (check%3 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
   } else if (check%3 == 1){
-    return 0;
+    return (x-check*period)/period-floor((x-check*period)/period);
   } else {
-    return (x-(check+2)*period)/period-floor((x-(check+2)*period)/period);
+    return 1;
   }    
 }

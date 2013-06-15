@@ -21,7 +21,7 @@ int main()
   const double nofbin = 256;
 
   double max_angle, L, d, offset;
-  max_angle = PI/3; L = 50; d = 5; offset = 0.5;
+  max_angle = PI/3; L = 50; d = 5; offset = 0.;
   FILE* file;
   char fname[][10] = {"A.txt","B.txt"};
   float real_w[(int)nofbin][2]; float real_obs[(int)nofbin][2];
