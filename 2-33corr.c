@@ -15,7 +15,6 @@ double sawtooth(double,double);
 
 int main()
 {
-  //printf("12");
   
   const double nofgrid = 256;
   const double nofbin = 256;
@@ -23,8 +22,8 @@ int main()
   double max_angle, L, d, offset;
   max_angle = PI/3; L = 50; d = 5; offset = 0.5;
   FILE* file;
-  char fname[][10] = {"A.txt","B.txt","C.txt","D.txt","E.txt","F.txt"};
-  float real_w[(int)nofbin][6]; float real_obs[(int)nofbin][6];
+  char fname[][10] = {"A.txt","B.txt","C.txt"};
+  float real_w[(int)nofbin][3]; float real_obs[(int)nofbin][3];
   double theta[(int)nofgrid][(int)nofgrid]; double phi[(int)nofgrid][(int)nofgrid];
   double sum[(int)nofbin];
   double max,min;
@@ -54,29 +53,23 @@ int main()
     }
   }
 
-  sum[0] = 0; sum[1] = 0; sum[2] = 0; sum[3] = 0; sum[4] = 0; sum[5] = 0;
-  file = fopen("21-165real.txt","r");
+  sum[0] = 0; sum[1] = 0; sum[2];
+  file = fopen("2-33real.txt","r");
   int ctr = 0;
   for (int i=0; i<nofbin; i++){
-    fscanf(file,"%f %f %f %f %f %f\n",*(real_w+i),*(real_w+i)+1,*(real_w+i)+2,*(real_w+i)+3,*(real_w+i)+4,*(real_w+i)+5);
+    fscanf(file,"%f %f %f \n",*(real_w+i),*(real_w+i)+1,*(real_w+i)+2);
     sum[0] += **(real_w+i);
     sum[1] += *(*(real_w+i)+1);
     sum[2] += *(*(real_w+i)+2);
-    sum[3] += *(*(real_w+i)+3);
-    sum[4] += *(*(real_w+i)+4);
-    sum[5] += *(*(real_w+i)+5);
   }
   fclose(file);
   for (int i=0; i<nofbin; i++){
     real_obs[i][0] = real_w[i][0] - sum[0]/nofbin;
     real_obs[i][1] = real_w[i][1] - sum[1]/nofbin;
     real_obs[i][2] = real_w[i][2] - sum[2]/nofbin;
-    real_obs[i][3] = real_w[i][3] - sum[3]/nofbin;
-    real_obs[i][4] = real_w[i][4] - sum[4]/nofbin;
-    real_obs[i][5] = real_w[i][5] - sum[5]/nofbin;
   }
 
-  for(int q=0; q<6; q++){
+  for(int q=0; q<3; q++){
     for(int i=0; i<nofbin; i++){
       sum[i] = 0;
     }
@@ -130,23 +123,17 @@ double sawtooth(double x, double period)
 {
   uint check;
   if(x/(period)<0) {
-    check = floor(x/period+300);
+    check = floor(x/period-1);
   } else {
     check = floor(x/period);
   }
-  if ((check%6 == 0)){
+  if (check%3 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
-  } else if ((check%6 == 3)){
-    return -(x-(check+3)*period)/period+floor((x-(check+3)*period)/period)+1;
-  } else if ((check%6 == 1)){
-    return 0;
-  } else if ((check%6 == 2)){
-    return (x-(check+2)*period)/period-floor((x-(check+2)*period)/period);
-  } else if ((check%6 == 4)){
-    return (x-(check+4)*period)/period-floor((x-(check+4)*period)/period);
+  } else if (check%3 == 1){
+    return (x-check*period)/period-floor((x-check*period)/period);
   } else {
     return 1;
-  }   
+  }    
 }
 
 double factorial(int k)

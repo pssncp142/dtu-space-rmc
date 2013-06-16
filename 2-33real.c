@@ -44,27 +44,21 @@ int main()
   double countA[lastndx];
   double countB[lastndx];
   double countC[lastndx];
-  double countD[lastndx];
-  double countE[lastndx];
-  double countF[lastndx];
   for(int i=0; i<lastndx; i++){
-    double rnd = (float)rand()/RAND_MAX; 
+    double rnd = (float)rand()/RAND_MAX;
     countA[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+offset*PI,PI)*randphot[(int) floor(rnd/probint)];
     countB[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+1)*PI,PI)*randphot[(int) floor(rnd/probint)];
     countC[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+2)*PI,PI)*randphot[(int) floor(rnd/probint)];
-    countD[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+3)*PI,PI)*randphot[(int) floor(rnd/probint)];
-    countE[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+4)*PI,PI)*randphot[(int) floor(rnd/probint)];
-    countF[i] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+5)*PI,PI)*randphot[(int) floor(rnd/probint)];
   }  
   
   FILE* file;
-  file = fopen("21-165real.txt","w+");
+  file = fopen("2-33real.txt","w+");
   for(int i=0; i<nofbins; i++){
-    fprintf(file,"%f %f %f %f %f %f\n",countA[i],countB[i],countC[i],countD[i],countE[i],countF[i]);
+    fprintf(file,"%f %f %f\n",countA[i],countB[i],countC[i]);
   }  
   fclose(file);
 
-  system("./21-165real.py");
+  system("./2-33real.py");
 
   return 0;
 }
@@ -73,23 +67,17 @@ double sawtooth(double x, double period)
 {
   uint check;
   if(x/(period)<0) {
-    check = floor(x/period+300);
+    check = floor(x/period-1);
   } else {
     check = floor(x/period);
   }
-  if ((check%6 == 0)){
+  if (check%3 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
-  } else if ((check%6 == 3)){
-    return -(x-(check+3)*period)/period+floor((x-(check+3)*period)/period)+1;
-  } else if ((check%6 == 1)){
-    return 0;
-  } else if ((check%6 == 2)){
-    return (x-(check+2)*period)/period-floor((x-(check+2)*period)/period);
-  } else if ((check%6 == 4)){
-    return (x-(check+4)*period)/period-floor((x-(check+4)*period)/period);
+  } else if (check%3 == 1){
+    return (x-check*period)/period-floor((x-check*period)/period);
   } else {
     return 1;
-  }   
+  }    
 }
 
 double factorial(int k)
