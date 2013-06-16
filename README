@@ -4,18 +4,18 @@ DTU SPACE - CubeWATCH Project Repository
 
 Information of file name :
 
-****************************************************************************
--mod    : gives modulation pattern
--real   : gives modulation with poisson distribution
--corr   : gives correlation pattern
-****************************************************************************
--50     : |C| %55 open grid | 1 open, 1 closed                   | two strips
--33     : |C| %33 open grid | 1 open, 2 closed                   | three strips
--25     : |C| %25 open grid | 1 open, 3 closed                   | four strips
--20     : |C| %20 open grid | 1 open, 4 closed                   | five strips
--2-33   : |S| %66 open grid | 2 open, 1 closed                   | three strips
--2-25   : |S| %50 open grid | 2 open, 2 closed                   | four strips
--2-20   : |S| %40 open grid | 2 open, 3 closed                   | five strips
--21-165 : |C| %50 open grid | 2 open, 2 closed, 1 open, 1 closed | six strips 
--11-20  : |U| %40 open grid | 1 open, 1 closed, 1 open, 2 closed | five strips
-****************************************************************************
+********************************************************************************
+*-mod    : gives modulation pattern
+*-real   : gives modulation with poisson distribution
+*-corr   : gives correlation pattern
+********************************************************************************
+*-50     : |C| %55 open grid | 1 open, 1 closed                   | two strips
+*-33     : |C| %33 open grid | 1 open, 2 closed                   | three strips
+*-25     : |C| %25 open grid | 1 open, 3 closed                   | four strips
+*-20     : |C| %20 open grid | 1 open, 4 closed                   | five strips
+*-2-33   : |C| %66 open grid | 2 open, 1 closed                   | three strips
+*-2-25   : |F| %50 open grid | 2 open, 2 closed                   | four strips
+*-2-20   : |C| %40 open grid | 2 open, 3 closed                   | five strips
+*-21-165 : |C| %50 open grid | 2 open, 2 closed, 1 open, 1 closed | six strips 
+*-11-20  : |U| %40 open grid | 1 open, 1 closed, 1 open, 2 closed | five strips
+********************************************************************************
