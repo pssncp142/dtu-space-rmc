@@ -14,7 +14,7 @@ double sawtooth(double,double);
 int main() 
 {
 
-  double theta = 0.3*PI, phi = 0.3*PI, nofbin = 256, offset = 0.5;
+  double theta = 0.25*PI, phi = 1.2*PI, nofbin = 256, offset = 0.;
   double L = 50, d = 5;
 
   double *cA = (double*)malloc(nofbin*sizeof(double));
