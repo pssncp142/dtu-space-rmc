@@ -23,8 +23,8 @@ int main()
   double max_angle, L, d, offset;
   max_angle = PI/3; L = 50; d = 5; offset = 0.5;
   FILE* file;
-  char fname[][10] = {"A.txt","B.txt","C.txt","D.txt"};
-  float real_w[(int)nofbin][4]; float real_obs[(int)nofbin][4];
+  char fname[][10] = {"A.txt","B.txt","C.txt","D.txt","E.txt"};
+  float real_w[(int)nofbin][5]; float real_obs[(int)nofbin][5];
   double theta[(int)nofgrid][(int)nofgrid]; double phi[(int)nofgrid][(int)nofgrid];
   double sum[(int)nofbin];
   double max,min;
@@ -54,15 +54,16 @@ int main()
     }
   }
 
-  sum[0] = 0; sum[1] = 0; sum[2] = 0; sum[3] = 0;
-  file = fopen("2-25real.txt","r");
+  sum[0] = 0; sum[1] = 0; sum[2] = 0; sum[3] = 0; sum[4] = 0;
+  file = fopen("20real.txt","r");
   int ctr = 0;
   for (int i=0; i<nofbin; i++){
-    fscanf(file,"%f %f %f %f\n",*(real_w+i),*(real_w+i)+1,*(real_w+i)+2,*(real_w+i)+3);
+    fscanf(file,"%f %f %f %f %f\n",*(real_w+i),*(real_w+i)+1,*(real_w+i)+2,*(real_w+i)+3,*(real_w+i)+4);
     sum[0] += **(real_w+i);
     sum[1] += *(*(real_w+i)+1);
     sum[2] += *(*(real_w+i)+2);
     sum[3] += *(*(real_w+i)+3);
+    sum[4] += *(*(real_w+i)+4);
   }
   fclose(file);
   for (int i=0; i<nofbin; i++){
@@ -70,9 +71,10 @@ int main()
     real_obs[i][1] = real_w[i][1] - sum[1]/nofbin;
     real_obs[i][2] = real_w[i][2] - sum[2]/nofbin;
     real_obs[i][3] = real_w[i][3] - sum[3]/nofbin;
+    real_obs[i][4] = real_w[i][4] - sum[4]/nofbin;
   }
 
-  for(int q=0; q<4; q++){
+  for(int q=0; q<5; q++){
     for(int i=0; i<nofbin; i++){
       sum[i] = 0;
     }
@@ -126,19 +128,17 @@ double sawtooth(double x, double period)
 {
   uint check;
   if(x/(period)<0) {
-    check = floor(x/period);
+    check = floor(x/period-1);
   } else {
     check = floor(x/period);
   }
-  if (check%4 == 0){
+  if (check%5 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
-  } else if (check%4 == 1){
+  } else if ((check%5 == 1) || (check%5 ==2) || (check%5 ==3)){
     return 0;
-  } else if (check%4 == 2){
-    return (x-(check+3)*period)/period-floor((x-(check+3)*period)/period);
   } else {
-    return 1;
-  }   
+    return (x-(check+4)*period)/period-floor((x-(check+4)*period)/period);
+  }    
 }
 
 double factorial(int k)

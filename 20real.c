@@ -67,7 +67,6 @@ int main()
   return 0;
 }
 
-double sawtooth(double x, double period)
 {
   uint check;
   if(x/(period)<0) {
@@ -77,7 +76,7 @@ double sawtooth(double x, double period)
   }
   if (check%5 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
-  } else if ((check%5 == 1) || (check%5 ==2) || (check%5 ==3)){
+  } else if ((check%5 == 1) || (check%5 ==2) || (check%5==3)){
     return 0;
   } else {
     return (x-(check+4)*period)/period-floor((x-(check+4)*period)/period);
