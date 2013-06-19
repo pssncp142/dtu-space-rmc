@@ -24,6 +24,7 @@ int main()
 
   //other calculations and variable definitions
   nofphot /= 3;
+  noise *= nofphot;
   double PIL_over_d = PI*L/d;
   double var = nofphot/nofbins;
   double var_n = noise/nofbins;

@@ -19,11 +19,12 @@ int main()
   double nofphot,nofbins,probint,offset,theta,phi,L,d,noise;
 
   //initial parameters
-  nofphot = 1200.; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.;
-  theta = 0.3*PI; phi = 1.2*PI; noise = 0.;
+  nofphot = 1200.; nofbins = 256; probint = 0.05; L = 50; d = 5;  offset = 0.25;
+  theta = 0.3*PI; phi = 1.2*PI; noise = 10.;
 
   //other calculations and variable definitions
   nofphot *= 0.2;
+  noise *= nofphot;
   double PIL_over_d = PI*L/d;
   double var = nofphot/nofbins;
   double var_n = noise/nofbins;
