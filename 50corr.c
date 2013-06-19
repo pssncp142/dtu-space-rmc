@@ -15,13 +15,12 @@ double sawtooth(double,double);
 
 int main()
 {
-  //printf("12");
   
   const double nofgrid = 256;
   const double nofbin = 256;
 
   double max_angle, L, d, offset;
-  max_angle = PI/3; L = 50; d = 5; offset = 0.;
+  max_angle = PI/3; L = 50; d = 5; offset = 0.5;
   FILE* file;
   char fname[][10] = {"A.txt","B.txt"};
   float real_w[(int)nofbin][2]; float real_obs[(int)nofbin][2];
