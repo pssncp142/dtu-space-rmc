@@ -9,6 +9,8 @@ Information of file name :
 *-real   : gives modulation with poisson distribution
 *-corr   : gives correlation pattern
 ****************************************************************************************************
+* NAME     | OPENING	   | PATTERN                            | DATA STRIPS  | COMMENTS
+*---------------------------------------------------------------------------------------------------
 *-50     : | %55 open grid | 1 open, 1 closed                   | two strips   |
 *-33     : | %33 open grid | 1 open, 2 closed                   | three strips |
 *-25     : | %25 open grid | 1 open, 3 closed                   | four strips  |
