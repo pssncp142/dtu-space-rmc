@@ -55,7 +55,7 @@ int main()
   }
 
   sum[0] = 0; sum[1] = 0; sum[2] = 0; sum[3] = 0; sum[4] = 0;
-  file = fopen("20real.txt","r");
+  file = fopen("11-20real.txt","r");
   int ctr = 0;
   for (int i=0; i<nofbin; i++){
     fscanf(file,"%f %f %f %f %f\n",*(real_w+i),*(real_w+i)+1,*(real_w+i)+2,*(real_w+i)+3,*(real_w+i)+4);
@@ -128,19 +128,22 @@ double sawtooth(double x, double period)
 {
   uint check;
   if(x/(period)<0) {
-    check = floor(x/period-1);
+    check = floor(x/period+500);
   } else {
     check = floor(x/period);
   }
   if (check%5 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
-  } else if ((check%5 == 1) || (check%5 ==2) || (check%5 ==3)){
-    return 0;
-  } else {
+  } else if ((check%5 == 3)){
+    return -(x-(check+3)*period)/period+floor((x-(check+3)*period)/period)+1;
+  } else if ((check%5 == 2)){
+    return (x-(check+2)*period)/period-floor((x-(check+2)*period)/period);
+  } else if ((check%5 == 4)){
     return (x-(check+4)*period)/period-floor((x-(check+4)*period)/period);
+  } else {
+    return 0;
   }    
 }
-
 double factorial(int k)
 {
   double res = 1;
