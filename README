@@ -20,5 +20,6 @@ Information of file name :
 *-2-20   : | %40 open grid | 2 open, 3 closed                   | five strips  |
 *-21-165 : | %50 open grid | 2 open, 2 closed, 1 open, 1 closed | six strips   |
 *-11-20  : | %40 open grid | 1 open, 1 closed, 1 open, 2 closed | five strips  |
-*-11-165 : | %33 open grid | 1 open, 1 closed, 1 open, 3 closed | six strips   | 
+*-11-165 : | %33 open grid | 1 open, 1 closed, 1 open, 3 closed | six strips   |
+*-15-165 : | %33 open grid | 1 open,1h closed, 1 open,2h closed | six strips   |
 ********************************************************************************
