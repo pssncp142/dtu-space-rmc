@@ -6,18 +6,17 @@
 int main()
 {
 
-  printf("holal");
   int i,j;
   int nofstrip = n();
-  double ***model = corr(0.2, 1.2, 0.5, 50, 5, 40000.,0.);
-  FILE* f = fopen("corr.txt","w+");
-  for(i=0; i<256; i++){
-    for(j=0; j<256; j++){
-      fprintf(f,"%f \n",model[2][i][j]);
-      }
-      fprintf(f,"\n");
-  }
-  fclose(f);
+  double **tt = lsf(0.3, 1.2, 0., 50, 5, 5000., 9.);
+  //FILE* f = fopen("corr.txt","w+");
+  for(i=0; i<3; i++){
+    //for(j=0; j<256; j++){
+    printf("%f %f %f\n",tt[i][0],tt[i][1],tt[i][0]/tt[i][1]);
+       }
+  //fprintf("\n");
+  //}
+  //fclose(f);
 
   return 0;
 
