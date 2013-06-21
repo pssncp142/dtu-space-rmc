@@ -1,6 +1,18 @@
 #include "stdio.h"
 #include "common.h"
 
+void wspfile(double **a,int n){
+  int i,j;
+  FILE* f = fopen("strip.txt","w+");
+  for(i=0;i<256;i++){
+    for(j=0;j<n;j++){
+      fprintf(f,"%f ",a[j][i]);
+    }
+    fprintf(f,"\n");
+  }
+  fclose(f);
+}
+
 double factorial(int k)
 {
   double res = 1;
@@ -81,6 +93,24 @@ int subtmean(double ***a){
     }
   }
   return 1;
+}
+
+double fsum(int* a,int n){
+  int i;
+  double sum=0;
+  for(i=0;i<n;i++){
+    sum += a[i];
+  }
+  return sum;
+}
+
+double fsum(double* a,int n){
+  int i;
+  double sum=0;
+  for(i=0;i<n;i++){
+    sum += a[i];
+  }
+  return sum;
 }
 
 double mult3sum(double *a, double *b,double *c,int n){

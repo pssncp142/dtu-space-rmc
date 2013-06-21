@@ -6,8 +6,8 @@
 
 #define PI 3.14159f
 
-int nofstrip = 2;
-double opening = 0.5;
+int nofstrip = 3;
+double opening = 1/3;
 
 int n(){
   return nofstrip;
@@ -149,7 +149,7 @@ double **mod(double theta, double phi, double offset, double L, double d)
   theta = theta*PI; phi = phi*PI;
 
   double **c = (double**)malloc(nofstrip*sizeof(double*));
-  for(i=0; i<2; i++){c[i]=(double*)malloc(256*sizeof(double));} 
+  for(i=0; i<nofstrip; i++){c[i]=(double*)malloc(256*sizeof(double));} 
   for(i=0; i<256; i++){
     for(j=0; j<nofstrip; j++){
       c[j][i] = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/256-phi)+(offset+j)*PI,PI);
@@ -162,13 +162,15 @@ double sawtooth(double x, double period)
 {
   uint check;
   if(x/(period)<0) {
-    check = floor(x/period+200);
+    check = floor(x/period+300);
   } else {
     check = floor(x/period);
   }
-  if (check%2 == 0){
+  if (check%3 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
-  }  else {
-    return (x-(check+1)*period)/period-floor((x-(check+1)*period)/period);
+  } else if (check%3 == 1){
+    return 0;
+  } else {
+    return (x-(check+2)*period)/period-floor((x-(check+2)*period)/period);
   }    
 }
