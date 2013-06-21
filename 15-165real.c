@@ -7,12 +7,11 @@
 #include "math.h"
 #include "stdlib.h"
 #include "stdio.h"
-#include "common.h"
 
 #define PI 3.14159f
 
 double sawtooth(double,double);
-//double factorial(int);
+double factorial(int);
 
 int main() 
 {
@@ -24,7 +23,7 @@ int main()
   theta = 0.3*PI; phi = 1.2*PI; noise = 10.;
 
   //other calculations and variable definitions
-  nofphot *= 0.5;
+  nofphot /= 3;
   noise *= nofphot;
   double PIL_over_d = PI*L/d;
   double var = nofphot/nofbins;
@@ -34,9 +33,9 @@ int main()
   double* prob_n = (double*) malloc(100*sizeof(double));
   int* randphot = (int*) malloc(nofbins*sizeof(int));
   int* randphot_n = (int*) malloc(nofbins*sizeof(int));
-  int** count = (int**) calloc(2,sizeof(int*));
-  for (int i=0; i<2; i++){count[i] = (int*) calloc(nofbins,sizeof(int));}
-  double* rate = (double*) malloc(sizeof(double));
+  int** count = (int**) calloc(6,sizeof(int*));
+  for (int i=0; i<6; i++){count[i] = (int*) calloc(nofbins,sizeof(int));}
+  double* rate = (double*) malloc(5*sizeof(double));
   double rnd;
 
   double check; 
@@ -65,34 +64,47 @@ int main()
   }
   for(int i=0; i<nofbins; i++){
     rate[0] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+offset*PI,PI);
+    rate[1] = rate[0] + sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+1)*PI,PI);
+    rate[2] = rate[1] + sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+2)*PI,PI);
+    rate[3] = rate[2] + sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+3)*PI,PI);
+    rate[4] = rate[3] + sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+4)*PI,PI);
+   
     for(int j=0; j<200; j++){
       if(j==randphot[i]){
 	break;
       }
-      rnd = (double)rand()/RAND_MAX;
+      rnd = (double)rand()/RAND_MAX*2;
       if(rnd < rate[0]){
 	count[0][i] += 1;
-      } else {
+      } else if (rnd < rate[1]){
 	count[1][i] += 1;
+      } else if (rnd < rate[2]){
+	count[2][i] += 1;
+      } else if (rnd < rate[3]){
+	count[3][i] += 1;
+      } else if (rnd < rate[4]){
+	count[4][i] += 1;
+      } else {
+	count[5][i] += 1;
       }
     }
     for(int j=0; j<200; j++){
       if(j==randphot_n[i]){
 	break;
       }
-      rnd = (double)rand()/RAND_MAX*2;
+      rnd = (double)rand()/RAND_MAX*6;
       count[(int)rnd][i] += 1;
     }
   }
   
   FILE* file;
-  file = fopen("50real.txt","w+");
+  file = fopen("15-165real.txt","w+");
   for(int i=0; i<nofbins; i++){
-    fprintf(file,"%d %d\n",count[0][i],count[1][i]);
+    fprintf(file,"%d %d %d %d %d %d\n",count[0][i],count[1][i],count[2][i],count[3][i],count[4][i],count[5][i]);
   }  
   fclose(file);
 
-  system("./50real.py");
+  system("./15-165real.py");
 
   return 0;
 }
@@ -100,24 +112,34 @@ int main()
 double sawtooth(double x, double period)
 {
   uint check;
-  if(x/(period)<0) {
-    check = floor(x/period);
+  if(x/(period*0.5)<0) {
+    check = floor(x/(period*0.5)+600);
   } else {
-    check = floor(x/period);
+    check = floor(x/(period*0.5));
   }
-  if (check%2 == 0){
-    return -(x-check*period)/period+floor((x-check*period)/period)+1;
-  }  else {
-    return (x-(check+1)*period)/period-floor((x-(check+1)*period)/period);
-  }    
+  if (check%12 == 0 | check%12 == 1){
+    return -(x-floor(check*0.5)*period)/period+floor((x-floor(check*0.5)*period)/period)+1;
+  } else if (check%12 == 3){
+    return (x-(floor(check*0.5)+1)*period)/period-floor((x-(floor(check*0.5)+1)*period)/period)-0.5;
+  } else if ((check%12 == 4)){
+    return (x-(floor(check*0.5)+2)*period)/period-floor((x-(floor(check*0.5)+2)*period)/period)+0.5;
+  } else if ((check%12 == 5)){
+    return -(x-(floor(check*0.5)+2)*period)/period+floor((x-(floor(check*0.5)+2)*period)/period)+1.5;
+  } else if ((check%12 == 6)){
+    return -(x-(floor(check*0.5)+3)*period)/period+floor((x-(floor(check*0.5)+3)*period)/period)+0.5;
+  } else if ((check%12 == 10) | (check%12 == 11)){
+    return (x-(floor(check*0.5)+5)*period)/period-floor((x-(floor(check*0.5)+5)*period)/period);
+  } else {
+    return 0;
+  } 
 }
 
-/*double factorial(int k)
+double factorial(int k)
 {
   double res = 1;
   for(int i=1; i<k; i++){
     res = res*(i+1); 
   }
   return res;
-  }*/
+}
 
