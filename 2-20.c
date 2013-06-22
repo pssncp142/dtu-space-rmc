@@ -6,8 +6,8 @@
 
 #define PI 3.14159f
 
-int nofstrip = 3;
-double opening = 1/3;
+int nofstrip = 5;
+double opening = 0.4;
 
 int n(){
   return nofstrip;
@@ -20,15 +20,17 @@ double sawtooth(double x, double period)
 {
   uint check;
   if(x/(period)<0) {
-    check = floor(x/period+300);
+    check = floor(x/period+500);
   } else {
     check = floor(x/period);
   }
-  if (check%3 == 0){
+  if (check%5 == 0){
     return -(x-check*period)/period+floor((x-check*period)/period)+1;
-  } else if (check%3 == 1){
+  } else if ((check%5 == 1) || (check%5 == 2)){
     return 0;
+  } else if(check%5 == 3){
+    return (x-(check+4)*period)/period-floor((x-(check+4)*period)/period);
   } else {
-    return (x-(check+2)*period)/period-floor((x-(check+2)*period)/period);
-  }    
-}
+    return 1;
+  }
+}   
