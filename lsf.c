@@ -9,7 +9,7 @@ void analysis(char*,int);
 int main(){
   
   int sp = n();
-  analysis("25lsf.txt",sp);
+  analysis("20lsf.txt",sp);
 
 }
 

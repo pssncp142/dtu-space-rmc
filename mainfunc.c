@@ -15,7 +15,6 @@ void init(){
   nofstrip = n();
 }
 
-
 int corr(double data[], double theta,double phi,double offset,double L,double d,double nofphot,double noise,int turn){
   
   
