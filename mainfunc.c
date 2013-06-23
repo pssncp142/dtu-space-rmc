@@ -1,3 +1,24 @@
+/*****************************************************************
+ * Yigit Dallilar 23.06.2013                                     *
+ * Main functions for the rmc simulation and analysis...         *
+ *****************************************************************/
+/*----------------------------------------------------------------*\
+|  NOTE : this file should be compiled with one of the mask        |
+|     specific codes.                                              |
+|                                                                  |
+|  variables needed in calculations :                              |
+|  data[] - is the variable for the output                         |
+|  theta - off-axis angle for the source - divided by PI           |
+|  phi - azimuth angle - divided by PI                             |
+|  offset - relative slide between upper grid and detector strips  |
+|  L - height between detector and the mask                        |
+|  d - strip thickness                                             |
+|  nofphot - number of photons to be executed                      |
+|  noise - needed for the determination of backgroud photons       |
+|      background photons = nofphot*noise                          |
+|  turn - number of full rotation                                  |
+\-----------------------------------------------------------------*/
+
 #include "stdio.h"
 #include "stdlib.h"
 #include "math.h"
@@ -7,16 +28,29 @@
 
 #define PI 3.14159f
 
+/*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+
+//global variables which are initialized by init function from the specific "mask-name".c files
 int nofstrip;
 double opening;
 
+/*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+
+//doing the initalisation for the global variables. It is necessary to call this function
+//from the functions below. So that, they know with which mask they are integrated.
 void init(){
   opening = op();
   nofstrip = n();
 }
 
-int corr(double data[], double theta,double phi,double offset,double L,double d,double nofphot,double noise,int turn){
-  
+/*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+
+//this function does the correlation map for the source concerning given values.
+//data[k*256*256+j*256+i]
+// k --> strip number
+// j --> jth grid on the y-axis
+// i --> ith grid on the x-axis
+int corr(double data[], double theta,double phi,double offset,double L,double d,double nofphot,double noise,int turn){  
   
   int i,j,k,l,st;
   init();
@@ -54,6 +88,9 @@ int corr(double data[], double theta,double phi,double offset,double L,double d,
   return 1;
 }
 
+/*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+
+//returns least square fitting result first nofstrip data belongs to each strip nofstrip+1 value is for total fit
 int lsf(double data[], double theta,double phi,double offset,double L,double d,double nofphot,double noise,int turn)
 {
   init();
@@ -100,6 +137,12 @@ int lsf(double data[], double theta,double phi,double offset,double L,double d,d
   return 1;
 }
 
+/*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+
+//returns result of the monte carlo simulation for every strip
+//count[256*j+i]
+// j --> strip number
+// i --> related phase bin
 int real(double count[], double theta, double phi, double offset, double L, double d, double nofphot, double noise, int turn) 
 {
   init();
@@ -176,7 +219,13 @@ int real(double count[], double theta, double phi, double offset, double L, doub
   return 1;
 }
 
-int mod(double model[], double theta, double phi, double offset, double L, double d) 
+/*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+
+//returns modulation function
+//data[256*j+i]
+// j --> strip number
+// i --> related phase bin
+int mod(double data[], double theta, double phi, double offset, double L, double d) 
 {
   init();
   int i,j,k,l,st;
@@ -185,8 +234,10 @@ int mod(double model[], double theta, double phi, double offset, double L, doubl
 
   for(i=0; i<256; i++){
     for(j=0; j<nofstrip; j++){
-      model[j*256+i] = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/256-phi)+(offset+j)*PI,PI);
+      data[j*256+i] = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/256-phi)+(offset+j)*PI,PI);
     }
   }
   return 1;
 }
+
+/*****************************************************************/
