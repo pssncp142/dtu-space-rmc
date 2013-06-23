@@ -31,7 +31,7 @@ while(i<sp) :
 
 plt.subplot(sp+1,1,sp+1)
 plt.plot(b,tot)
-plt.ylim(0,4)
+#plt.ylim(0,4)
 plt.grid(True)
 plt.show()
 

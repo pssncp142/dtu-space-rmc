@@ -7,7 +7,7 @@
 #define PI 3.14159f
 
 int nofstrip = 6;
-double opening = 1/3;
+double opening = 1./3;
 
 int n(){
   return nofstrip;

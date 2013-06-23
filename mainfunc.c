@@ -1,82 +1,114 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "math.h"
+#include "time.h"
 
 #include "common.h"
 
 #define PI 3.14159f
 
-int i,j,k,st;
 int nofstrip;
-int opening;
+double opening;
 
 void init(){
   opening = op();
   nofstrip = n();
 }
 
-double **lsf(double theta,double phi,double offset,double L,double d,double nofphot,double noise)
+
+int corr(double data[], double theta,double phi,double offset,double L,double d,double nofphot,double noise,int turn){
+  
+  
+  int i,j,k,l,st;
+  init();
+  
+  double posx,posy;
+  double max_angle = PI/3;
+  double model[2000],obs[2000],weight[2000];
+  st = real(weight,theta,phi,offset,L,d,nofphot,noise,turn); 
+  st = real(obs,theta,phi,offset,L,d,nofphot,noise,turn); 
+  st = subtmean(obs,nofstrip);
+  
+  for(i=0;i<256;i++){
+    for(j=0;j<256;j++){
+      posx = (i-256*0.5)*L*tan(max_angle)/(256*0.5)+L*tan(max_angle)/(256*0.5);
+      posy = (j-256*0.5)*L*tan(max_angle)/(256*0.5)+L*tan(max_angle)/(256*0.5);
+      theta = atan(sqrt((posx*posx+posy*posy)/(L*L)));
+      if(posx < 0 && posy > 0){
+	phi = atan(posy/posx) + PI;
+      }else if(posx < 0 && posy < 0){
+	phi = atan(posy/posx) - PI;
+      } else {
+	phi = atan(posy/posx);
+      }
+      st = mod(model,theta/PI,phi/PI,offset,L,d);
+      st = subtmean(model,nofstrip);
+      for(k=0;k<nofstrip;k++){
+	data[k*256*256+j*256+i] = mult3sum(model,obs,weight,k);
+      }
+    }
+  }
+  
+  
+  norm1_1(data,nofstrip);  
+  
+  return 1;
+}
+
+int lsf(double data[], double theta,double phi,double offset,double L,double d,double nofphot,double noise,int turn)
 {
   init();
+  int i,j,k,l,st;
 
-  double **data=(double**)malloc((nofstrip+2)*sizeof(double*));
-  for(i=0;i<nofstrip+2;i++){data[i]=(double*)malloc(2*sizeof(double));}
-  data[nofstrip][0]=0; data[nofstrip][1]=0;
+  data[nofstrip]=0;
   double LHS[100]; double RHS[100];
-  double **obs=real(theta,phi,offset,L,d,nofphot,noise); 
-  double **model=mod(theta,phi,offset,L,d);
+  double obs[2000]; double model[2000];
+  st = real(obs,theta,phi,offset,L,d,nofphot,noise,turn); 
+  st = mod(model,theta,phi,offset,L,d);
+
+  st = norm0_1(model,nofstrip);
+  st = norm0_1(obs,nofstrip);
  
   for(j=0; j<nofstrip; j++){
-
-    st = norm1d(model[j]);
-    st = norm1d(obs[j]);
   
     LHS[0] = 1./256; LHS[1]=0; LHS[2]=0; LHS[3]=0; RHS[0] = 0; RHS[1] = 0; 
 
     for(i=0; i<256; i++){
-      LHS[1] += model[j][i]/256;
-      LHS[2] += model[j][i]/256;
-      LHS[3] += pow(model[j][i],2);
-      RHS[0] += obs[j][i]/256;
-      RHS[1] += obs[j][i]*model[j][i];
+      LHS[1] += model[j*256+i]/256;
+      LHS[2] += model[j*256+i]/256;
+      LHS[3] += pow(model[j*256+i],2);
+      RHS[0] += obs[j*256+i]/256;
+      RHS[1] += obs[j*256+i]*model[j*256+i];
     }
 
     st =  gaussj_nr(LHS,2,RHS,2);
-    data[j][0] = RHS[0];
-    data[j][1] = RHS[1];
+    data[j] = RHS[0]/RHS[1];
   }
 
-  for(i=0;i<nofstrip;i++){
-    data[nofstrip][0] += data[i][0]/nofstrip;
-    data[nofstrip][1] += data[i][1]/nofstrip;
-  }
+  LHS[0] = (1./256)/(nofstrip); LHS[1]=0; LHS[2]=0; LHS[3]=0; RHS[0] = 0; RHS[1] = 0; 
 
-  LHS[0] = (1./256)/nofstrip; LHS[1]=0; LHS[2]=0; LHS[3]=0; RHS[0] = 0; RHS[1] = 0; 
-
-  for(j=0;j<nofstrip;j++){
-    for(i=0;i<256;i++){
-      LHS[1] += (model[j][i]/256)/(nofstrip*nofstrip);
-      LHS[2] += (model[j][i]/256)/(nofstrip*nofstrip);
-      LHS[3] += pow(model[j][i],2)/(nofstrip*nofstrip);
-      RHS[0] += (obs[j][i]/256)/(nofstrip*nofstrip);
-      RHS[1] += (obs[j][i]*model[j][i])/(nofstrip*nofstrip);
-    }
+  for(i=0;i<256*nofstrip;i++){
+    LHS[1] += (model[i]/256)/(nofstrip*nofstrip);
+    LHS[2] += (model[i]/256)/(nofstrip*nofstrip);
+    LHS[3] += pow(model[i],2)/(nofstrip*nofstrip);
+    RHS[0] += (obs[i]/256)/(nofstrip*nofstrip);
+    RHS[1] += (obs[i]*model[i])/(nofstrip*nofstrip);
   }
 
   st =  gaussj_nr(LHS,2,RHS,2);
-  data[nofstrip+1][0] = RHS[0];
-  data[nofstrip+1][1] = RHS[1];
+  data[nofstrip] = RHS[0]/RHS[1];
   
-  free(obs);
-  free(model);
-  return data;
+  return 1;
 }
 
-double **real(double theta, double phi, double offset, double L, double d, double nofphot, double noise) 
+int real(double count[], double theta, double phi, double offset, double L, double d, double nofphot, double noise, int turn) 
 {
   init();
+  int i,j,k,l,st;
 
   phi = PI*phi; theta = theta*PI;
+  for(i=0;i<2000;i++)
+    count[i] = 0;
   double nofbins = 256;
   double probint = 0.05;
   nofphot *= opening;
@@ -85,32 +117,28 @@ double **real(double theta, double phi, double offset, double L, double d, doubl
   double var = nofphot/nofbins;
   double var_n = noise/nofbins;
   int dim = 1/probint;
-  double* prob = (double*) malloc(400*sizeof(double));
-  double* prob_n = (double*) malloc(400*sizeof(double));
-  int* randphot = (int*) malloc(nofbins*sizeof(int));
-  int* randphot_n = (int*) malloc(nofbins*sizeof(int));
-  double** count = (double**) calloc(nofstrip,sizeof(double*));
-  for (i=0; i<nofstrip; i++){count[i] = (double*) calloc(nofbins,sizeof(double));}
-  double* rate = (double*) malloc(sizeof(double));
+  double prob[1000], prob_n[1000], rate[10];
+  int randphot[50000], randphot_n[50000];
   double rnd;
+  srand(time(NULL));
 
   double check; 
   prob[0] = exp(-var); prob_n[0] = exp(-var_n);
-  for(i=0; i<400; i++){
-    prob[i+1] = prob[i] + exp(-var)*pow(var,i+1)/factorial(i+1);
-    prob_n[i+1] = prob_n[i] + exp(-var_n)*pow(var_n,i+1)/factorial(i+1);
+  for(i=1; i<1000; i++){
+    prob[i] = prob[i-1] + exp(-var)*pow(var,i)/factorial(i);
+    prob_n[i] = prob_n[i-1] + exp(-var_n)*pow(var_n,i)/factorial(i);
   }
-  for(i=0; i<nofbins; i++){
-    rnd = (double)rand()/RAND_MAX*nofstrip*opening;
-    for (j=0; j<400; j++){
+  for(i=0; i<nofbins*turn; i++){
+    rnd = (double)rand()/RAND_MAX;
+    for (j=0; j<1000; j++){
       check=prob[j];
       if(rnd < check){
 	randphot[i] = j;  
 	break;
       }
     }
-    rnd = (double)rand()/RAND_MAX*nofstrip;
-    for (j=0; j<400; j++){
+    rnd = (double)rand()/RAND_MAX;
+    for (j=0; j<1000; j++){
       check=prob_n[j];
       if(rnd < check){
 	randphot_n[i] = j;  
@@ -118,48 +146,48 @@ double **real(double theta, double phi, double offset, double L, double d, doubl
       }
     }
   }
-  for(i=0; i<nofbins; i++){
-    rate[0] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+offset*PI,PI);
-    for(j=1; j<nofstrip-1; j++){
-      rate[j] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+j)*PI,PI);}
-
-    for(j=0; j<400; j++){
-      if(j==randphot[i]){
-	break;
+  for(l=0;l<turn;l++){
+    for(i=0; i<nofbins; i++){
+      rate[0] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+offset*PI,PI); 
+      for(j=1; j<nofstrip-1; j++){
+	rate[j] = rate[j-1] + sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+j)*PI,PI);
       }
-      rnd = (double)rand()/RAND_MAX;
-      for(k=0;k<nofstrip-1;k++){
-	if(rnd < rate[k]){
-	  ++count[k][i]; break;}
-	if(k == nofstrip -2 ){
-	  ++count[nofstrip-1][i];}
+    
+      for(j=0; j<2000; j++){
+	if(j==randphot[l*256+i]){
+	  break;
+	}
+	rnd = (double)rand()/RAND_MAX*nofstrip*opening;
+	for(k=0;k<nofstrip-1;k++){
+	  if(rnd < rate[k]){
+	    ++count[k*256+i]; break;}
+	  if(k == nofstrip-2 ){
+	    ++count[(nofstrip-1)*256+i];}
+	}
       }
-    }
-    for(j=0; j<400; j++){
-      if(j==randphot_n[i]){
-	break;
+      for(j=0; j<2000; j++){
+	if(j==randphot_n[i]){
+	  break;
+	}
+	rnd = (double)rand()/RAND_MAX*nofstrip;
+	++count[(int)rnd*256+i];
       }
-      rnd = (double)rand()/RAND_MAX*2;
-      count[(int)rnd][i] += 1;
     }
   }
-  printf("%f %f %f %f\n",fsumint(randphot,256),fsumint(randphot_n,256),
-	   fsumdub(count[0],256),fsumdub(count[1],256));
-  return count;
+  return 1;
 }
 
-double **mod(double theta, double phi, double offset, double L, double d) 
+int mod(double model[], double theta, double phi, double offset, double L, double d) 
 {
   init();
+  int i,j,k,l,st;
 
   theta = theta*PI; phi = phi*PI;
 
-  double **c = (double**)malloc(nofstrip*sizeof(double*));
-  for(i=0; i<nofstrip; i++){c[i]=(double*)malloc(256*sizeof(double));} 
   for(i=0; i<256; i++){
     for(j=0; j<nofstrip; j++){
-      c[j][i] = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/256-phi)+(offset+j)*PI,PI);
+      model[j*256+i] = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/256-phi)+(offset+j)*PI,PI);
     }
   }
-  return c;
+  return 1;
 }

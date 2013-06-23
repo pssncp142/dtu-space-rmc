@@ -1,40 +1,8 @@
 #include "stdio.h"
+#include "stdlib.h"
 #include "common.h"
 
 int i,j,k;
-
-double fmaxd(double **a){
-  double max=a[0][0];
-  for(i=0; i<256; i++ ){
-    for(j=0; j<256; j++){
-      if (a[i][j] > max)
-	max = a[i][j];
-    }
-  }
-  return max;
-}
-
-double fmind(double **a){
-  double min=a[0][0];
-  for(i=0; i<256; i++ ){
-    for(j=0; j<256; j++){
-      if (a[i][j] < min)
-	min = a[i][j];
-    }
-  }
-  return min;
-}
-
-void wspfile(double **a,int n){
-  FILE* f = fopen("strip.txt","w+");
-  for(i=0;i<256;i++){
-    for(j=0;j<n;j++){
-      fprintf(f,"%f ",a[j][i]);
-    }
-    fprintf(f,"\n");
-  }
-  fclose(f);
-}
 
 double factorial(int k)
 {
@@ -45,83 +13,79 @@ double factorial(int k)
   return res;
 }
 
-int norm1d(double *a){
+double mult3sum(double *a,double *b,double *c,int n){
   double sum = 0;
-  for(i=0; i<256; i++){
-    sum += a[i];
+  for(i=0;i<256;i++){
+    sum += a[n*256+i]*b[n*256+i]*c[n*256+i];
   }
-  for(i=0; i<256; i++){
-    a[i] /= sum;
-  }
-  return 1;
+  return sum;
 }
 
-int norm2d(double **a){
-  double max; double min;
-  max = fmaxd(a); min = fmind(a);
-  for(i=0; i<256; i++){
-    for(j=0; j<256; j++){
-      a[i][j] = (a[i][j]-min)/(max-min)*2-1;
+int subtmean(double a[],int n){
+  double sum;
+  for(j=0; j<n; j++){
+    sum = 0;
+    for(i=0; i<256; i++){
+      sum += a[j*256+i];
+    }
+    for(i=0; i<256; i++){
+      a[j*256+i] -= sum/256;
     }
   }
   return 1;
 }
 
-int totsc_fact(double ***a,int n){
-  for(i=0; i<256; i++){
-    for(j=0; j<256; j++){
-      a[n][i][j] = 0;
+int norm1_1(double a[],int n){
+  double max,min;
+  for(k=0;k<n;k++){
+    max = -1e10; min = +1e10;
+    for(i=0;i<256;i++){
+      for(j=0;j<256;j++){
+	if(a[k*256*256+j*256+i]>max) max = a[k*256*256+j*256+i];
+	if(a[k*256*256+j*256+i]<min) min = a[k*256*256+j*256+i];
+      }
     }
-  }
-  for(i=0; i<256; i++){
-    for(j=0; j<256; j++){
-      for(k=0; k<n; k++){
-	a[n][i][j] += a[k][i][j];
+    for(i=0;i<256;i++){
+      for(j=0;j<256;j++){
+	a[k*256*256+j*256+i] = (a[k*256*256+j*256+i]-min)/(max-min)*2-1;
       }
     }
   }
-  int st = norm2d(a[n]);
+  for(i=0;i<256;i++){
+    for(j=0;j<256;j++){
+      a[n*256*256+j*256+i] = 0;
+      for(k=0;k<n;k++){
+	a[n*256*256+j*256+i] += a[k*256*256+j*256+i];
+      }
+    }
+  }
+  max = -1e10; min = +1e10;
+  for(i=0;i<256;i++){
+    for(j=0;j<256;j++){
+      if(a[n*256*256+j*256+i]>max) max = a[n*256*256+j*256+i];
+      if(a[n*256*256+j*256+i]<min) min = a[n*256*256+j*256+i];
+    }
+  }
+  for(i=0;i<256;i++){
+    for(j=0;j<256;j++){
+      a[n*256*256+j*256+i] = (a[n*256*256+j*256+i]-min)/(max-min)*2-1;
+    }
+  }
   return 1;
 }
 
-int subtmean2d(double **a, int n){
-  double sum[n];
-  for(i=0; i<n; i++) {sum[i]=0;}
-  for(i=0; i<n; i++){
-    for(j=0; j<256; j++){
-      sum[i] += a[i][j]/256;
+int norm0_1(double a[], int n){
+  double sum;
+  for(j=0; j<n; j++){
+    sum = 0;
+    for(i=0; i<256; i++){
+      sum += a[j*256+i];
     }
-  }
-  for(i=0; i<n; i++){
-    for(j=0; j<256; j++){
-      a[i][j] -= sum[i];
+    for(i=0; i<256; i++){
+      a[j*256+i] /= sum;
     }
   }
   return 1;
-}
-
-double fsumint(int* a,int n){
-  double sum=0;
-  for(i=0;i<n;i++){
-    sum += a[i];
-  }
-  return sum;
-}
-
-double fsumdub(double* a,int n){
-  double sum=0;
-  for(i=0;i<n;i++){
-    sum += a[i];
-  }
-  return sum;
-}
-
-double mult3sum(double *a, double *b,double *c,int n){
-  double sum = 0;
-  for(i=0; i<n; i++){
-    sum += a[i]*b[i]*c[i];
-  }
-  return sum;
 }
 
 
