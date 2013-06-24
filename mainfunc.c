@@ -46,23 +46,24 @@ void init(){
 }
 
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
-
+//n_source is changed with k !!!!!!
 int loc_source(double info[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn){  
   
   int i,j,k,l,m,n,st;
   init();
 
-  double data[500000];
+  double map[80000];
+  double obs[2000];
   int x_ndx[20] , y_ndx[20]; 
   double max, posx, posy, max_angle=PI/3;
   int same;
   
-  st = corr(data,n_source,theta,phi,offset,L,d,nofphot,noise,turn);
+  st = corr(map,obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn);
 
   FILE* f = fopen("T.txt","w+");
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){
-      fprintf(f,"%f ",data[nofstrip*256*256+j*256+i]);
+      fprintf(f,"%f ",map[j*256+i]);
     }
     fprintf(f,"\n");
   }
@@ -71,7 +72,7 @@ int loc_source(double info[], int n_source, double *theta,double *phi,double off
   k=0;
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){
-      if(data[nofstrip*256*256+j*256+i] > 0.8){
+      if(map[j*256+i] > 0.6){
 	same = 0;
 	if (k==0) goto firstsource;
 	for(l=0;l<20;l++){
@@ -82,15 +83,15 @@ int loc_source(double info[], int n_source, double *theta,double *phi,double off
 	}
       firstsource:
 	if(same==0){
-	  max = data[nofstrip*256*256+j*256+i];
+	  max = map[j*256+i];
 	  x_ndx[k] = i;
 	  y_ndx[k] = j;
 	  for(m=4;m>-5;m--){
 	    for(n=4;n>-5;n--){
-	      if(data[nofstrip*256*256+(j+n)*256+(m+i)]>max){
+	      if(map[(j+n)*256+(m+i)]>max){
 		x_ndx[k] = m+i;
 		y_ndx[k] = n+j;
-		max = data[nofstrip*256*256+(n+j)*256+(m+i)];
+		max = map[(n+j)*256+(m+i)];
 	      }
 	    }
 	  }
@@ -106,24 +107,26 @@ int loc_source(double info[], int n_source, double *theta,double *phi,double off
 
     posx = (x_ndx[l]-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5);
     posy = (y_ndx[l]-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5);
-    theta[0] = atan(sqrt((posx*posx+posy*posy)/(L*L)));
+    theta[l] = atan(sqrt((posx*posx+posy*posy)/(L*L)))/PI;
     if(posx < 0 && posy > 0){
-      phi[0] = atan(posy/posx) + PI;
+      phi[l] = atan(posy/posx)/PI + 1;
     }else if(posx < 0 && posy < 0){
-      phi[0] = atan(posy/posx) - PI;
+      phi[l] = atan(posy/posx)/PI - 1;
     } else {
-      phi[0] = atan(posy/posx);
+      phi[l] = atan(posy/posx)/PI;
     }
     
-    printf("Theta : %4.2f  Phi : %4.2f \n",theta[0]/PI,phi[0]/PI);
-    
-    for(i=4;i>-5;i--){
-      for(j=4;j>-5;j--){
-	printf("%6.2f ",data[nofstrip*256*256+(y_ndx[l]+i)*256+(x_ndx[l]+j)]);
-      }
-      printf("\n");
-    }
+    printf("Theta : %4.2f  Phi : %4.2f \n",theta[l],phi[l]);
+
   }
+
+  double aa[20];
+ 
+  n_source = k;
+
+  st = lsf(aa,obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn);
+
+  return 1;
 
 }
 
@@ -134,17 +137,18 @@ int loc_source(double info[], int n_source, double *theta,double *phi,double off
 // k --> strip number
 // j --> jth grid on the y-axis
 // i --> ith grid on the x-axis
-int corr(double data[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn){  
+int corr(double map[], double obs[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn){  
   
   int i,j,k,l,st;
   init();
   
   double posx,posy;
   double max_angle = PI/3;
-  double model[2000],obs[2000],weight[2000];
-  st = real(weight,n_source,theta,phi,offset,L,d,nofphot,noise,turn); 
+  double data[500000];
+  double model[2000],sbtr_obs[2000];
   st = real(obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn); 
-  st = subtmean(obs,nofstrip);
+  st = real(sbtr_obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn); 
+  st = subtmean(sbtr_obs,nofstrip);
   
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){
@@ -161,12 +165,18 @@ int corr(double data[], int n_source, double *theta,double *phi,double offset,do
       st = mod(model,theta[0]/PI,phi[0]/PI,offset,L,d);
       st = subtmean(model,nofstrip);
       for(k=0;k<nofstrip;k++){
-	data[k*256*256+j*256+i] = mult3sum(model,obs,weight,k);
+	data[k*256*256+j*256+i] = mult3sum(model,sbtr_obs,obs,k);
       }
     }
   }
   
-  norm1_1(data,nofstrip);  
+  norm1_1(data,nofstrip);
+
+  for(i=0;i<256;i++){
+    for(j=0;j<256;j++){
+      map[j*256+i] = data[nofstrip*256*256+j*256+i];
+    }
+  }
   
   return 1;
 }
@@ -174,49 +184,46 @@ int corr(double data[], int n_source, double *theta,double *phi,double offset,do
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
 
 //returns least square fitting result first nofstrip data belongs to each strip nofstrip+1 value is for total fit
-int lsf(double data[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn)
+int lsf(double data[], double obs[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn)
 {
   init();
   int i,j,k,l,st;
 
   data[nofstrip]=0;
-  double LHS[100]; double RHS[100];
-  double obs[2000]; double model[2000];
-  st = real(obs,1,theta,phi,offset,L,d,nofphot,noise,turn); 
-  st = mod(model,theta[0],phi[0],offset,L,d);
+  double LHS[700] = {0}; double RHS[700] = {0};
+  double model[3000]; double tmp_model[3000]; double *tmp_obs;
+  tmp_obs = obs;
 
-  st = norm0_1(model,nofstrip);
-  st = norm0_1(obs,nofstrip);
- 
-  /*for(j=0; j<nofstrip; j++){
-  
-    LHS[0] = 1./256; LHS[1]=0; LHS[2]=0; LHS[3]=0; RHS[0] = 0; RHS[1] = 0; 
+  st = norm0_1(tmp_obs,nofstrip);
 
-    for(i=0; i<256; i++){
-      LHS[1] += model[j*256+i]/256;
-      LHS[2] += model[j*256+i]/256;
-      LHS[3] += pow(model[j*256+i],2);
-      RHS[0] += obs[j*256+i]/256;
-      RHS[1] += obs[j*256+i]*model[j*256+i];
-    }
-
-    st =  gaussj_nr(LHS,2,RHS,2);
-    data[j] = RHS[0]/RHS[1];
-    }*/
-
-  LHS[0] = (1./256)/(nofstrip); LHS[1]=0; LHS[2]=0; LHS[3]=0; RHS[0] = 0; RHS[1] = 0; 
-
+  LHS[0] = (1./256)/(nofstrip);
   for(i=0;i<256*nofstrip;i++){
-    LHS[1] += (model[i]/256)/(nofstrip*nofstrip);
-    LHS[2] += (model[i]/256)/(nofstrip*nofstrip);
-    LHS[3] += pow(model[i],2)/(nofstrip*nofstrip);
-    RHS[0] += (obs[i]/256)/(nofstrip*nofstrip);
-    RHS[1] += (obs[i]*model[i])/(nofstrip*nofstrip);
+    RHS[0] += (tmp_obs[i]/256)/(nofstrip*nofstrip);
   }
 
-  st =  gaussj_nr(LHS,2,RHS,2);
-  data[nofstrip] = RHS[0]/RHS[1];
+  for(j=1;j<n_source+1;j++){
+    st = mod(model,theta[j-1],phi[j-1],offset,L,d);
+    st = norm0_1(model,nofstrip);
+    for(i=0;i<256*nofstrip;i++){
+      RHS[j] += (tmp_obs[i]*model[i])/(nofstrip*nofstrip);
+      LHS[j] += (model[i]/256)/(nofstrip*nofstrip);
+      LHS[j*(n_source+1)] = LHS[j]; 
+      LHS[j*(n_source+1)+j] += pow(model[i],2)/(nofstrip*nofstrip);
+    }
+    for(k=j+1;k<n_source+1;k++){
+      st = mod(tmp_model,theta[k-1],phi[k-1],offset,L,d);
+      st = norm0_1(tmp_model,nofstrip);
+      for(i=0;i<256*nofstrip;i++){
+	LHS[j*(n_source+1)+k] += (tmp_model[i]*model[i])/(nofstrip*nofstrip);
+	LHS[k*(n_source+1)+j] = LHS[j*(n_source+1)+k];
+      }
+    }
+  }
+
+  st =  gaussj_nr(LHS,n_source+1,RHS,n_source+1);
+  printf("%f %f %f %f\n",RHS[0],RHS[1],RHS[2],RHS[3]);
   
+  //free(tmp_obs);
   return 1;
 }
 
