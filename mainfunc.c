@@ -2,18 +2,20 @@
  * Yigit Dallilar 23.06.2013                                     *
  * Main functions for the rmc simulation and analysis...         *
  *****************************************************************/
+
 /*----------------------------------------------------------------*\
 |  NOTE : this file should be compiled with one of the mask        |
 |     specific codes.                                              |
 |                                                                  |
 |  variables needed in calculations :                              |
 |  data[] - is the variable for the output                         |
-|  theta - off-axis angle for the source - divided by PI           |
-|  phi - azimuth angle - divided by PI                             |
+|  n_source - number of sources                                    |
+|  *theta - off-axis angle for the source - divided by PI          |
+|  *phi - azimuth angle - divided by PI                            |
 |  offset - relative slide between upper grid and detector strips  |
 |  L - height between detector and the mask                        |
 |  d - strip thickness                                             |
-|  nofphot - number of photons to be executed                      |
+|  *nofphot - number of photons to be executed                     |
 |  noise - needed for the determination of backgroud photons       |
 |      background photons = nofphot*noise                          |
 |  turn - number of full rotation                                  |
@@ -50,7 +52,7 @@ void init(){
 // k --> strip number
 // j --> jth grid on the y-axis
 // i --> ith grid on the x-axis
-int corr(double data[], double theta,double phi,double offset,double L,double d,double nofphot,double noise,int turn){  
+int corr(double data[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn){  
   
   int i,j,k,l,st;
   init();
@@ -58,30 +60,29 @@ int corr(double data[], double theta,double phi,double offset,double L,double d,
   double posx,posy;
   double max_angle = PI/3;
   double model[2000],obs[2000],weight[2000];
-  st = real(weight,theta,phi,offset,L,d,nofphot,noise,turn); 
-  st = real(obs,theta,phi,offset,L,d,nofphot,noise,turn); 
+  st = real(weight,n_source,theta,phi,offset,L,d,nofphot,noise,turn); 
+  st = real(obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn); 
   st = subtmean(obs,nofstrip);
   
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){
       posx = (i-256*0.5)*L*tan(max_angle)/(256*0.5)+L*tan(max_angle)/(256*0.5);
       posy = (j-256*0.5)*L*tan(max_angle)/(256*0.5)+L*tan(max_angle)/(256*0.5);
-      theta = atan(sqrt((posx*posx+posy*posy)/(L*L)));
+      theta[0] = atan(sqrt((posx*posx+posy*posy)/(L*L)));
       if(posx < 0 && posy > 0){
-	phi = atan(posy/posx) + PI;
+	phi[0] = atan(posy/posx) + PI;
       }else if(posx < 0 && posy < 0){
-	phi = atan(posy/posx) - PI;
+	phi[0] = atan(posy/posx) - PI;
       } else {
-	phi = atan(posy/posx);
+	phi[0] = atan(posy/posx);
       }
-      st = mod(model,theta/PI,phi/PI,offset,L,d);
+      st = mod(model,theta[0]/PI,phi[0]/PI,offset,L,d);
       st = subtmean(model,nofstrip);
       for(k=0;k<nofstrip;k++){
 	data[k*256*256+j*256+i] = mult3sum(model,obs,weight,k);
       }
     }
   }
-  
   
   norm1_1(data,nofstrip);  
   
@@ -91,7 +92,7 @@ int corr(double data[], double theta,double phi,double offset,double L,double d,
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
 
 //returns least square fitting result first nofstrip data belongs to each strip nofstrip+1 value is for total fit
-int lsf(double data[], double theta,double phi,double offset,double L,double d,double nofphot,double noise,int turn)
+int lsf(double data[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn)
 {
   init();
   int i,j,k,l,st;
@@ -99,8 +100,8 @@ int lsf(double data[], double theta,double phi,double offset,double L,double d,d
   data[nofstrip]=0;
   double LHS[100]; double RHS[100];
   double obs[2000]; double model[2000];
-  st = real(obs,theta,phi,offset,L,d,nofphot,noise,turn); 
-  st = mod(model,theta,phi,offset,L,d);
+  st = real(obs,1,theta,phi,offset,L,d,nofphot,noise,turn); 
+  st = mod(model,theta[0],phi[0],offset,L,d);
 
   st = norm0_1(model,nofstrip);
   st = norm0_1(obs,nofstrip);
@@ -143,72 +144,79 @@ int lsf(double data[], double theta,double phi,double offset,double L,double d,d
 //count[256*j+i]
 // j --> strip number
 // i --> related phase bin
-int real(double count[], double theta, double phi, double offset, double L, double d, double nofphot, double noise, int turn) 
+int real(double count[], int n_source, double* theta, double* phi, double offset, double L, double d, double* nofphot, double noise, int turn) 
 {
   init();
-  int i,j,k,l,st;
+  int i,j,k,l,m,st;
 
-  phi = PI*phi; theta = theta*PI;
+  
   for(i=0;i<2000;i++)
     count[i] = 0;
   double nofbins = 256;
   double probint = 0.05;
-  nofphot *= opening;
-  noise *= nofphot;
+  noise *= opening;
   double PIL_over_d = PI*L/d;
-  double var = nofphot/nofbins;
-  double var_n = noise/nofbins;
+  double var;
   int dim = 1/probint;
-  double prob[1000], prob_n[1000], rate[10];
-  int randphot[50000], randphot_n[50000];
-  double rnd;
+  double prob[1000], rate[10];
+  int randphot;
+  double rnd;   double check; 
   srand(time(NULL));
 
-  double check; 
-  prob[0] = exp(-var); prob_n[0] = exp(-var_n);
+  for(m=0;m<n_source;m++){
+    var = nofphot[m]*opening/256;
+    prob[0] = exp(-var);
+    for(l=1; l<1000; l++){
+      prob[l] = prob[l-1] + exp(-var)*pow(var,l)/factorial(l);
+    }
+    printf("%f %f %f\n",nofphot[m],theta[m],phi[m]);
+    for(l=0;l<turn;l++){
+      for(i=0; i<nofbins; i++){
+	rate[0] = sawtooth(PIL_over_d*tan(theta[m]*PI)*cos(i*2*PI/nofbins-phi[m]*PI)+offset*PI,PI); 
+	for(j=1; j<nofstrip-1; j++){
+	  rate[j] = rate[j-1] + sawtooth(PIL_over_d*tan(theta[m]*PI)*cos(i*2*PI/nofbins-phi[m]*PI)+(offset+j)*PI,PI);
+	}
+	rnd = (double)rand()/RAND_MAX;
+	for (j=0; j<1000; j++){
+	  check=prob[j];
+	  if(rnd < check){
+	    randphot = j;  
+	    break;
+	  }
+	}
+	for(j=0; j<2000; j++){
+	  if(j==randphot){
+	    break;
+	  }
+	  rnd = (double)rand()/RAND_MAX*nofstrip*opening;
+	  for(k=0;k<nofstrip-1;k++){
+	    if(rnd < rate[k]){
+	      ++count[k*256+i]; break;}
+	    if(k == nofstrip-2 ){
+	      ++count[(nofstrip-1)*256+i];}
+	  }
+	}
+      }
+    }
+  }
+
+  var = noise/256;
+  prob[0] = exp(-var);
   for(i=1; i<1000; i++){
     prob[i] = prob[i-1] + exp(-var)*pow(var,i)/factorial(i);
-    prob_n[i] = prob_n[i-1] + exp(-var_n)*pow(var_n,i)/factorial(i);
-  }
-  for(i=0; i<nofbins*turn; i++){
-    rnd = (double)rand()/RAND_MAX;
-    for (j=0; j<1000; j++){
-      check=prob[j];
-      if(rnd < check){
-	randphot[i] = j;  
-	break;
-      }
-    }
-    rnd = (double)rand()/RAND_MAX;
-    for (j=0; j<1000; j++){
-      check=prob_n[j];
-      if(rnd < check){
-	randphot_n[i] = j;  
-	break;
-      }
-    }
   }
   for(l=0;l<turn;l++){
     for(i=0; i<nofbins; i++){
-      rate[0] = sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+offset*PI,PI); 
-      for(j=1; j<nofstrip-1; j++){
-	rate[j] = rate[j-1] + sawtooth(PIL_over_d*tan(theta)*cos(i*2*PI/nofbins-phi)+(offset+j)*PI,PI);
-      }
-    
-      for(j=0; j<2000; j++){
-	if(j==randphot[l*256+i]){
+      rnd = (double)rand()/RAND_MAX;
+      for (j=0; j<1000; j++){
+	check=prob[j];
+	if(rnd < check){
+	  randphot = j;  
 	  break;
 	}
-	rnd = (double)rand()/RAND_MAX*nofstrip*opening;
-	for(k=0;k<nofstrip-1;k++){
-	  if(rnd < rate[k]){
-	    ++count[k*256+i]; break;}
-	  if(k == nofstrip-2 ){
-	    ++count[(nofstrip-1)*256+i];}
-	}
       }
       for(j=0; j<2000; j++){
-	if(j==randphot_n[i]){
+	if(j==randphot){
 	  break;
 	}
 	rnd = (double)rand()/RAND_MAX*nofstrip;
@@ -216,6 +224,7 @@ int real(double count[], double theta, double phi, double offset, double L, doub
       }
     }
   }
+
   return 1;
 }
 
