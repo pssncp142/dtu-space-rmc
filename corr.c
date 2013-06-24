@@ -10,7 +10,7 @@ int main(){
   double phi[5] = {1.,0.3,0.7,0,0};
   double nofphot[5] = {1000.,1000.,1000,0,0};
 
-  st = corr(data,1,theta,phi,0.25,50,5,nofphot,0.,50);
+  st = corr(data,3,theta,phi,0.25,50,5,nofphot,0.,50);
   FILE* f = fopen("T.txt","w+");
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){

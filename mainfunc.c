@@ -47,6 +47,88 @@ void init(){
 
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
 
+int loc_source(double info[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn){  
+  
+  int i,j,k,l,m,n,st;
+  init();
+
+  double data[500000];
+  int x_ndx[20] , y_ndx[20]; 
+  double max, posx, posy, max_angle=PI/3;
+  int same;
+  
+  st = corr(data,n_source,theta,phi,offset,L,d,nofphot,noise,turn);
+
+  FILE* f = fopen("T.txt","w+");
+  for(i=0;i<256;i++){
+    for(j=0;j<256;j++){
+      fprintf(f,"%f ",data[nofstrip*256*256+j*256+i]);
+    }
+    fprintf(f,"\n");
+  }
+  fclose(f);
+
+  k=0;
+  for(i=0;i<256;i++){
+    for(j=0;j<256;j++){
+      if(data[nofstrip*256*256+j*256+i] > 0.8){
+	same = 0;
+	if (k==0) goto firstsource;
+	for(l=0;l<20;l++){
+	  if(k==l) {same = 0; break;}
+	  if((j<y_ndx[l]+5) & (j>y_ndx[l]-5) & (i<x_ndx[l]+5) & (i>x_ndx[l]-5)){
+	    same = 1; break;
+	  }
+	}
+      firstsource:
+	if(same==0){
+	  max = data[nofstrip*256*256+j*256+i];
+	  x_ndx[k] = i;
+	  y_ndx[k] = j;
+	  for(m=4;m>-5;m--){
+	    for(n=4;n>-5;n--){
+	      if(data[nofstrip*256*256+(j+n)*256+(m+i)]>max){
+		x_ndx[k] = m+i;
+		y_ndx[k] = n+j;
+		max = data[nofstrip*256*256+(n+j)*256+(m+i)];
+	      }
+	    }
+	  }
+	  k++;
+	}
+      }
+    }
+  }
+
+  printf("%d  source is found...\n",k);
+
+  for(l=0;l<k;l++){
+
+    posx = (x_ndx[l]-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5);
+    posy = (y_ndx[l]-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5);
+    theta[0] = atan(sqrt((posx*posx+posy*posy)/(L*L)));
+    if(posx < 0 && posy > 0){
+      phi[0] = atan(posy/posx) + PI;
+    }else if(posx < 0 && posy < 0){
+      phi[0] = atan(posy/posx) - PI;
+    } else {
+      phi[0] = atan(posy/posx);
+    }
+    
+    printf("Theta : %4.2f  Phi : %4.2f \n",theta[0]/PI,phi[0]/PI);
+    
+    for(i=4;i>-5;i--){
+      for(j=4;j>-5;j--){
+	printf("%6.2f ",data[nofstrip*256*256+(y_ndx[l]+i)*256+(x_ndx[l]+j)]);
+      }
+      printf("\n");
+    }
+  }
+
+}
+
+/*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+
 //this function does the correlation map for the source concerning given values.
 //data[k*256*256+j*256+i]
 // k --> strip number
@@ -66,8 +148,8 @@ int corr(double data[], int n_source, double *theta,double *phi,double offset,do
   
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){
-      posx = (i-256*0.5)*L*tan(max_angle)/(256*0.5)+L*tan(max_angle)/(256*0.5);
-      posy = (j-256*0.5)*L*tan(max_angle)/(256*0.5)+L*tan(max_angle)/(256*0.5);
+      posx = (i-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5);
+      posy = (j-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5);
       theta[0] = atan(sqrt((posx*posx+posy*posy)/(L*L)));
       if(posx < 0 && posy > 0){
 	phi[0] = atan(posy/posx) + PI;
@@ -106,7 +188,7 @@ int lsf(double data[], int n_source, double *theta,double *phi,double offset,dou
   st = norm0_1(model,nofstrip);
   st = norm0_1(obs,nofstrip);
  
-  for(j=0; j<nofstrip; j++){
+  /*for(j=0; j<nofstrip; j++){
   
     LHS[0] = 1./256; LHS[1]=0; LHS[2]=0; LHS[3]=0; RHS[0] = 0; RHS[1] = 0; 
 
@@ -120,7 +202,7 @@ int lsf(double data[], int n_source, double *theta,double *phi,double offset,dou
 
     st =  gaussj_nr(LHS,2,RHS,2);
     data[j] = RHS[0]/RHS[1];
-  }
+    }*/
 
   LHS[0] = (1./256)/(nofstrip); LHS[1]=0; LHS[2]=0; LHS[3]=0; RHS[0] = 0; RHS[1] = 0; 
 
@@ -169,7 +251,6 @@ int real(double count[], int n_source, double* theta, double* phi, double offset
     for(l=1; l<1000; l++){
       prob[l] = prob[l-1] + exp(-var)*pow(var,l)/factorial(l);
     }
-    printf("%f %f %f\n",nofphot[m],theta[m],phi[m]);
     for(l=0;l<turn;l++){
       for(i=0; i<nofbins; i++){
 	rate[0] = sawtooth(PIL_over_d*tan(theta[m]*PI)*cos(i*2*PI/nofbins-phi[m]*PI)+offset*PI,PI); 
