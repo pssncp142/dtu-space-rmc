@@ -1,25 +1,27 @@
-/*****************************************************************
- * Yigit Dallilar 23.06.2013                                     *
- * Main functions for the rmc simulation and analysis...         *
- *****************************************************************/
+/*******************************************************************
+ * Yigit Dallilar 23.06.2013                                       *
+ * Main functions for the rmc simulation and analysis...           *
+ *******************************************************************/
 
-/*----------------------------------------------------------------*\
-|  NOTE : this file should be compiled with one of the mask        |
-|     specific codes.                                              |
-|                                                                  |
-|  variables needed in calculations :                              |
-|  data[] - is the variable for the output                         |
-|  n_source - number of sources                                    |
-|  *theta - off-axis angle for the source - divided by PI          |
-|  *phi - azimuth angle - divided by PI                            |
-|  offset - relative slide between upper grid and detector strips  |
-|  L - height between detector and the mask                        |
-|  d - strip thickness                                             |
-|  *nofphot - number of photons to be executed                     |
-|  noise - needed for the determination of backgroud photons       |
-|      background photons = nofphot*noise                          |
-|  turn - number of full rotation                                  |
-\-----------------------------------------------------------------*/
+/*-----------------------------------------------------------------*\
+|  NOTE : this file should be compiled with one of the mask         |
+|     specific codes.                                               |
+|                                                                   |
+|  variables needed in calculations :                               |
+|                                                                   |
+| %  n_source - number of sources                                   |
+| %  *theta - off-axis angle for the source - divided by PI         |
+| %  *phi - azimuth angle - divided by PI                           |
+| %  offset - relative slide between upper grid and detector strips |
+| %  L - height between detector and the mask                       |
+| %  d - strip thickness                                            |
+| %  *nofphot - number of photons to be executed                    |
+| %  noise - needed for the determination of backgroud photons      |
+|      background photons = nofphot*noise                           |
+| %  turn - number of full rotation                                 |
+|                                                                   |
+|  if the variable is not one of them it should be an output        |
+\------------------------------------------------------------------*/
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -115,16 +117,20 @@ int loc_source(double info[], int n_source, double *theta,double *phi,double off
     } else {
       phi[l] = atan(posy/posx)/PI;
     }
-    
-    printf("Theta : %4.2f  Phi : %4.2f \n",theta[l],phi[l]);
-
   }
 
-  double aa[20];
+  double res[20];
  
   n_source = k;
 
-  st = lsf(aa,obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn);
+  st = lsf(res,obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn);
+
+  for(i=0;i<n_source;i++){
+    printf("Relative Intensity   : %4.3f   Theta : %4.2f   Phi : %4.2f \n",
+	   res[i+1],theta[i],phi[i]);
+  }
+
+  printf("Estimated Background : %4.3f\n",res[0]);
 
   return 1;
 
@@ -146,15 +152,21 @@ int corr(double map[], double obs[], int n_source, double *theta,double *phi,dou
   double max_angle = PI/3;
   double data[500000];
   double model[2000],sbtr_obs[2000];
+  double half_map = L*tan(max_angle);
+  double half_st = 0.5*L*tan(max_angle)/(256*0.5);
+  double all_st = L*tan(max_angle)/(256*0.5);
+  double L_2 = L*L;
+  int grid_2 = 256*256;
   st = real(obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn); 
   st = real(sbtr_obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn); 
   st = subtmean(sbtr_obs,nofstrip);
+
   
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){
-      posx = (i-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5);
-      posy = (j-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5);
-      theta[0] = atan(sqrt((posx*posx+posy*posy)/(L*L)));
+      posx = i*all_st+half_st-half_map;
+      posy = j*all_st+half_st-half_map;
+      theta[0] = atan(sqrt((posx*posx+posy*posy)/(L_2)));
       if(posx < 0 && posy > 0){
 	phi[0] = atan(posy/posx) + PI;
       }else if(posx < 0 && posy < 0){
@@ -165,7 +177,7 @@ int corr(double map[], double obs[], int n_source, double *theta,double *phi,dou
       st = mod(model,theta[0]/PI,phi[0]/PI,offset,L,d);
       st = subtmean(model,nofstrip);
       for(k=0;k<nofstrip;k++){
-	data[k*256*256+j*256+i] = mult3sum(model,sbtr_obs,obs,k);
+	data[k*grid_2+j*256+i] = mult3sum(model,sbtr_obs,obs,k);
       }
     }
   }
@@ -174,7 +186,7 @@ int corr(double map[], double obs[], int n_source, double *theta,double *phi,dou
 
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){
-      map[j*256+i] = data[nofstrip*256*256+j*256+i];
+      map[j*256+i] = data[nofstrip*grid_2+j*256+i];
     }
   }
   
@@ -184,46 +196,42 @@ int corr(double map[], double obs[], int n_source, double *theta,double *phi,dou
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
 
 //returns least square fitting result first nofstrip data belongs to each strip nofstrip+1 value is for total fit
-int lsf(double data[], double obs[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn)
+int lsf(double res[], double obs[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn)
 {
   init();
   int i,j,k,l,st;
 
-  data[nofstrip]=0;
-  double LHS[700] = {0}; double RHS[700] = {0};
+  double LHS[700] = {0};
   double model[3000]; double tmp_model[3000]; double *tmp_obs;
+  double nofstrip_2 = nofstrip*nofstrip;
   tmp_obs = obs;
 
   st = norm0_1(tmp_obs,nofstrip);
 
   LHS[0] = (1./256)/(nofstrip);
-  for(i=0;i<256*nofstrip;i++){
-    RHS[0] += (tmp_obs[i]/256)/(nofstrip*nofstrip);
-  }
-
+  res[0] = (1./256)/(nofstrip);
+ 
   for(j=1;j<n_source+1;j++){
     st = mod(model,theta[j-1],phi[j-1],offset,L,d);
     st = norm0_1(model,nofstrip);
     for(i=0;i<256*nofstrip;i++){
-      RHS[j] += (tmp_obs[i]*model[i])/(nofstrip*nofstrip);
-      LHS[j] += (model[i]/256)/(nofstrip*nofstrip);
+      res[j] += (tmp_obs[i]*model[i])/(nofstrip_2);
+      LHS[j] += (model[i]/256)/(nofstrip_2);
       LHS[j*(n_source+1)] = LHS[j]; 
-      LHS[j*(n_source+1)+j] += pow(model[i],2)/(nofstrip*nofstrip);
+      LHS[j*(n_source+1)+j] += pow(model[i],2)/(nofstrip_2);
     }
     for(k=j+1;k<n_source+1;k++){
       st = mod(tmp_model,theta[k-1],phi[k-1],offset,L,d);
       st = norm0_1(tmp_model,nofstrip);
       for(i=0;i<256*nofstrip;i++){
-	LHS[j*(n_source+1)+k] += (tmp_model[i]*model[i])/(nofstrip*nofstrip);
+	LHS[j*(n_source+1)+k] += (tmp_model[i]*model[i])/(nofstrip_2);
 	LHS[k*(n_source+1)+j] = LHS[j*(n_source+1)+k];
       }
     }
   }
 
-  st =  gaussj_nr(LHS,n_source+1,RHS,n_source+1);
-  printf("%f %f %f %f\n",RHS[0],RHS[1],RHS[2],RHS[3]);
+  st =  gaussj_nr(LHS,n_source+1,res,n_source+1);
   
-  //free(tmp_obs);
   return 1;
 }
 
@@ -326,12 +334,14 @@ int mod(double data[], double theta, double phi, double offset, double L, double
 {
   init();
   int i,j,k,l,st;
+  double PIL_over_d = PI*L/d;
+  double PI2_over_256 = 2*PI/256;
 
   theta = theta*PI; phi = phi*PI;
 
   for(i=0; i<256; i++){
     for(j=0; j<nofstrip; j++){
-      data[j*256+i] = sawtooth(PI*L/d*tan(theta)*cos(i*2*PI/256-phi)+(offset+j)*PI,PI);
+      data[j*256+i] = sawtooth(PIL_over_d*tan(theta)*cos(i*PI2_over_256-phi)+(offset+j)*PI,PI);
     }
   }
   return 1;
