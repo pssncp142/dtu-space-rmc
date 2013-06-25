@@ -48,37 +48,57 @@ void init(){
 }
 
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+
+double clean(double obs[], double fit[], double sources[], int n_source, double count, double offset, double L, double d){
+
+  int i,ndx,st;
+  double model[2000];
+  double max=-1;
+  for(i=1;i<n_source+1;i++){
+    if(fit[i] > max){
+      ndx = i-1;
+      max = fit[i];
+    }
+  }
+
+  st = mod(model,sources[ndx*2],sources[ndx*2+1],offset,L,d);
+
+  for(i=0;i<nofstrip*256;i++) obs[i] -= fit[ndx+1]*model[i]*count/256;
+
+  printf("The strongest one is removed...\n");
+  printf("  - %d --> Theta : %5.2f*PI    Phi : %5.2f*PI\n\n",
+	 ndx+1,sources[ndx*2],sources[ndx*2+1],count*fit[ndx+1]);
+
+  sources[0] = sources[ndx*2];
+  sources[1] = sources[ndx*2+1];
+  sources[2] = fit[ndx+1]*count;
+
+  count -= fit[ndx+1]*count;
+
+  return count;
+}
+
+/*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+
 //n_source is changed with k !!!!!!
-int loc_source(double info[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn){  
+int loc_source(double sources[], double map[], double obs[], double L){  
   
   int i,j,k,l,m,n,st;
   init();
 
-  double map[80000];
-  double obs[2000];
   int x_ndx[20] , y_ndx[20]; 
   double max, posx, posy, max_angle=PI/3;
   int same;
   
-  st = corr(map,obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn);
-
-  FILE* f = fopen("T.txt","w+");
-  for(i=0;i<256;i++){
-    for(j=0;j<256;j++){
-      fprintf(f,"%f ",map[j*256+i]);
-    }
-    fprintf(f,"\n");
-  }
-  fclose(f);
-
   k=0;
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){
-      if(map[j*256+i] > 0.6){
+      if(k>5){k=-1; goto quit;}
+      if(map[j*256+i] > 0.8){
 	same = 0;
 	if (k==0) goto firstsource;
 	for(l=0;l<20;l++){
-	  if(k==l) {same = 0; break;}
+	  if(k==l) {same = 0; break;;}
 	  if((j<y_ndx[l]+5) & (j>y_ndx[l]-5) & (i<x_ndx[l]+5) & (i>x_ndx[l]-5)){
 	    same = 1; break;
 	  }
@@ -103,37 +123,23 @@ int loc_source(double info[], int n_source, double *theta,double *phi,double off
     }
   }
 
-  printf("%d  source is found...\n",k);
-
   for(l=0;l<k;l++){
 
     posx = (x_ndx[l]-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5);
     posy = (y_ndx[l]-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5);
-    theta[l] = atan(sqrt((posx*posx+posy*posy)/(L*L)))/PI;
+    sources[2*l] = atan(sqrt((posx*posx+posy*posy)/(L*L)))/PI;
     if(posx < 0 && posy > 0){
-      phi[l] = atan(posy/posx)/PI + 1;
+      sources[2*l+1] = atan(posy/posx)/PI + 1;
     }else if(posx < 0 && posy < 0){
-      phi[l] = atan(posy/posx)/PI - 1;
+      sources[2*l+1] = atan(posy/posx)/PI - 1;
     } else {
-      phi[l] = atan(posy/posx)/PI;
+      sources[2*l+1] = atan(posy/posx)/PI;
     }
   }
 
-  double res[20];
- 
-  n_source = k;
+ quit:
 
-  st = lsf(res,obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn);
-
-  for(i=0;i<n_source;i++){
-    printf("Relative Intensity   : %4.3f   Theta : %4.2f   Phi : %4.2f \n",
-	   res[i+1],theta[i],phi[i]);
-  }
-
-  printf("Estimated Background : %4.3f\n",res[0]);
-
-  return 1;
-
+  return k;
 }
 
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
@@ -143,12 +149,13 @@ int loc_source(double info[], int n_source, double *theta,double *phi,double off
 // k --> strip number
 // j --> jth grid on the y-axis
 // i --> ith grid on the x-axis
-int corr(double map[], double obs[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn){  
+int corr(double map[], double obs[], double L, double d, double offset){  
   
   int i,j,k,l,st;
   init();
   
   double posx,posy;
+  double theta,phi;
   double max_angle = PI/3;
   double data[500000];
   double model[2000],sbtr_obs[2000];
@@ -156,9 +163,8 @@ int corr(double map[], double obs[], int n_source, double *theta,double *phi,dou
   double half_st = 0.5*L*tan(max_angle)/(256*0.5);
   double all_st = L*tan(max_angle)/(256*0.5);
   double L_2 = L*L;
-  int grid_2 = 256*256;
-  st = real(obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn); 
-  st = real(sbtr_obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn); 
+  int grid_2 = 256*256; 
+  for(i=0;i<nofstrip*256;i++) sbtr_obs[i] = obs[i];
   st = subtmean(sbtr_obs,nofstrip);
 
   
@@ -166,15 +172,15 @@ int corr(double map[], double obs[], int n_source, double *theta,double *phi,dou
     for(j=0;j<256;j++){
       posx = i*all_st+half_st-half_map;
       posy = j*all_st+half_st-half_map;
-      theta[0] = atan(sqrt((posx*posx+posy*posy)/(L_2)));
+      theta = atan(sqrt((posx*posx+posy*posy)/(L_2)));
       if(posx < 0 && posy > 0){
-	phi[0] = atan(posy/posx) + PI;
+	phi = atan(posy/posx) + PI;
       }else if(posx < 0 && posy < 0){
-	phi[0] = atan(posy/posx) - PI;
+	phi = atan(posy/posx) - PI;
       } else {
-	phi[0] = atan(posy/posx);
+	phi = atan(posy/posx);
       }
-      st = mod(model,theta[0]/PI,phi[0]/PI,offset,L,d);
+      st = mod(model,theta/PI,phi/PI,offset,L,d);
       st = subtmean(model,nofstrip);
       for(k=0;k<nofstrip;k++){
 	data[k*grid_2+j*256+i] = mult3sum(model,sbtr_obs,obs,k);
@@ -196,32 +202,33 @@ int corr(double map[], double obs[], int n_source, double *theta,double *phi,dou
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
 
 //returns least square fitting result first nofstrip data belongs to each strip nofstrip+1 value is for total fit
-int lsf(double res[], double obs[], int n_source, double *theta,double *phi,double offset,double L,double d,double *nofphot,double noise,int turn)
+int lsf(double fit[], double obs[], double sources[], int n_source, double L, double d, double offset)
 {
   init();
   int i,j,k,l,st;
 
   double LHS[700] = {0};
-  double model[3000]; double tmp_model[3000]; double *tmp_obs;
+  for(i=0;i<400;i++) fit[i] = 0;
+  double model[2000]; double tmp_model[2000]; double tmp_obs[2000];
   double nofstrip_2 = nofstrip*nofstrip;
-  tmp_obs = obs;
-
+  
+  for(i=0;i<nofstrip*256;i++) tmp_obs[i] = obs[i];
   st = norm0_1(tmp_obs,nofstrip);
 
   LHS[0] = (1./256)/(nofstrip);
-  res[0] = (1./256)/(nofstrip);
+  fit[0] = (1./256)/(nofstrip);
  
   for(j=1;j<n_source+1;j++){
-    st = mod(model,theta[j-1],phi[j-1],offset,L,d);
+    st = mod(model,sources[(j-1)*2],sources[(j-1)*2+1],offset,L,d);
     st = norm0_1(model,nofstrip);
     for(i=0;i<256*nofstrip;i++){
-      res[j] += (tmp_obs[i]*model[i])/(nofstrip_2);
+      fit[j] += (tmp_obs[i]*model[i])/(nofstrip_2);
       LHS[j] += (model[i]/256)/(nofstrip_2);
       LHS[j*(n_source+1)] = LHS[j]; 
       LHS[j*(n_source+1)+j] += pow(model[i],2)/(nofstrip_2);
     }
     for(k=j+1;k<n_source+1;k++){
-      st = mod(tmp_model,theta[k-1],phi[k-1],offset,L,d);
+      st = mod(tmp_model,sources[(k-1)*2],sources[(k-1)*2+1],offset,L,d);
       st = norm0_1(tmp_model,nofstrip);
       for(i=0;i<256*nofstrip;i++){
 	LHS[j*(n_source+1)+k] += (tmp_model[i]*model[i])/(nofstrip_2);
@@ -230,7 +237,7 @@ int lsf(double res[], double obs[], int n_source, double *theta,double *phi,doub
     }
   }
 
-  st =  gaussj_nr(LHS,n_source+1,res,n_source+1);
+  st =  gaussj_nr(LHS,n_source+1,fit,n_source+1);
   
   return 1;
 }
@@ -241,14 +248,13 @@ int lsf(double res[], double obs[], int n_source, double *theta,double *phi,doub
 //count[256*j+i]
 // j --> strip number
 // i --> related phase bin
-int real(double count[], int n_source, double* theta, double* phi, double offset, double L, double d, double* nofphot, double noise, int turn) 
+double real(double obs[], int n_source, double* theta, double* phi, double offset, double L, double d, double* nofphot, double noise, int turn) 
 {
   init();
   int i,j,k,l,m,st;
-
   
-  for(i=0;i<2000;i++)
-    count[i] = 0;
+  double count = 0;
+  for(i=0;i<2000;i++) obs[i] = 0;
   double nofbins = 256;
   double probint = 0.05;
   noise *= opening;
@@ -287,9 +293,9 @@ int real(double count[], int n_source, double* theta, double* phi, double offset
 	  rnd = (double)rand()/RAND_MAX*nofstrip*opening;
 	  for(k=0;k<nofstrip-1;k++){
 	    if(rnd < rate[k]){
-	      ++count[k*256+i]; break;}
+	      ++obs[k*256+i]; break;}
 	    if(k == nofstrip-2 ){
-	      ++count[(nofstrip-1)*256+i];}
+	      ++obs[(nofstrip-1)*256+i];}
 	  }
 	}
       }
@@ -316,32 +322,33 @@ int real(double count[], int n_source, double* theta, double* phi, double offset
 	  break;
 	}
 	rnd = (double)rand()/RAND_MAX*nofstrip;
-	++count[(int)rnd*256+i];
+	++obs[(int)rnd*256+i];
       }
     }
   }
 
-  return 1;
+  for(i=0;i<nofstrip*256;i++) count += obs[i];
+  
+  return count;
 }
 
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+//nofstrip*opening
 
 //returns modulation function
 //data[256*j+i]
 // j --> strip number
 // i --> related phase bin
-int mod(double data[], double theta, double phi, double offset, double L, double d) 
+int mod(double model[], double theta, double phi, double offset, double L, double d) 
 {
   init();
   int i,j,k,l,st;
   double PIL_over_d = PI*L/d;
   double PI2_over_256 = 2*PI/256;
 
-  theta = theta*PI; phi = phi*PI;
-
   for(i=0; i<256; i++){
     for(j=0; j<nofstrip; j++){
-      data[j*256+i] = sawtooth(PIL_over_d*tan(theta)*cos(i*PI2_over_256-phi)+(offset+j)*PI,PI);
+      model[j*256+i] = sawtooth(PIL_over_d*tan(theta*PI)*cos(i*PI2_over_256-phi*PI)+(offset+j)*PI,PI)/(nofstrip*opening);
     }
   }
   return 1;
