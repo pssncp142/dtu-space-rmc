@@ -51,29 +51,15 @@ void init(){
 
 double clean(double obs[], double fit[], double sources[], int n_source, double count, double offset, double L, double d){
 
-  int i,ndx,st;
+  int i,j,ndx,st;
   double model[2000];
   double max=-1;
-  for(i=1;i<n_source+1;i++){
-    if(fit[i] > max){
-      ndx = i-1;
-      max = fit[i];
-    }
+ 
+  for(j=0;j<n_source;j++){
+    st = mod(model,sources[j*2],sources[j*2+1],offset,L,d);
+    for(i=0;i<nofstrip*256;i++) obs[i] -= fit[j+1]*model[i]*count/256;
+    count -= fit[j+1]*count;
   }
-
-  st = mod(model,sources[ndx*2],sources[ndx*2+1],offset,L,d);
-
-  for(i=0;i<nofstrip*256;i++) obs[i] -= fit[ndx+1]*model[i]*count/256;
-
-  printf("The strongest one is removed...\n");
-  printf("  - %d --> Theta : %5.2f*PI    Phi : %5.2f*PI\n\n",
-	 ndx+1,sources[ndx*2],sources[ndx*2+1],count*fit[ndx+1]);
-
-  sources[0] = sources[ndx*2];
-  sources[1] = sources[ndx*2+1];
-  sources[2] = fit[ndx+1]*count;
-
-  count -= fit[ndx+1]*count;
 
   return count;
 }
@@ -81,65 +67,51 @@ double clean(double obs[], double fit[], double sources[], int n_source, double 
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
 
 //n_source is changed with k !!!!!!
-int loc_source(double sources[], double map[], double obs[], double L){  
+int loc_source(double sources[], double map[], double banned[], int n_source, double L){  
   
   int i,j,k,l,m,n,st;
   init();
 
-  int x_ndx[20] , y_ndx[20]; 
-  double max, posx, posy, max_angle=PI/3;
-  int same;
+  int x_ndx, y_ndx;
+  int range=3;
+  double sum=0;
+  double max, posx=0, posy=0, max_angle=PI/3;
+  max = -1;
   
-  k=0;
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){
-      if(k>5){k=-1; goto quit;}
-      if(map[j*256+i] > 0.8){
-	same = 0;
-	if (k==0) goto firstsource;
-	for(l=0;l<20;l++){
-	  if(k==l) {same = 0; break;;}
-	  if((j<y_ndx[l]+5) & (j>y_ndx[l]-5) & (i<x_ndx[l]+5) & (i>x_ndx[l]-5)){
-	    same = 1; break;
-	  }
-	}
-      firstsource:
-	if(same==0){
+      if(banned[j*256+i]==0){
+	if(map[j*256+i] > max){
 	  max = map[j*256+i];
-	  x_ndx[k] = i;
-	  y_ndx[k] = j;
-	  for(m=4;m>-5;m--){
-	    for(n=4;n>-5;n--){
-	      if(map[(j+n)*256+(m+i)]>max){
-		x_ndx[k] = m+i;
-		y_ndx[k] = n+j;
-		max = map[(n+j)*256+(m+i)];
-	      }
-	    }
-	  }
-	  k++;
+	  x_ndx = i;
+	  y_ndx = j;
 	}
       }
     }
   }
 
-  for(l=0;l<k;l++){
-
-    posx = (x_ndx[l]-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5);
-    posy = (y_ndx[l]-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5);
-    sources[2*l] = atan(sqrt((posx*posx+posy*posy)/(L*L)))/PI;
-    if(posx < 0 && posy > 0){
-      sources[2*l+1] = atan(posy/posx)/PI + 1;
-    }else if(posx < 0 && posy < 0){
-      sources[2*l+1] = atan(posy/posx)/PI - 1;
-    } else {
-      sources[2*l+1] = atan(posy/posx)/PI;
+  for(i=-range;i<range+1;i++){
+    for(j=-range;j<range+1;j++){
+      banned[(y_ndx+j)*256+(x_ndx+i)] = 1;
+      posx += (((x_ndx+i)-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5))*map[(y_ndx+j)*256+(x_ndx+i)];
+      posy += (((y_ndx+j)-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5))*map[(y_ndx+j)*256+(x_ndx+i)];
+      sum += map[(y_ndx+j)*256+(x_ndx+i)];
     }
   }
 
- quit:
+  posx /= sum;
+  posy /= sum;
 
-  return k;
+  sources[2*n_source] = atan(sqrt((posx*posx+posy*posy)/(L*L)))/PI;
+  if(posx < 0 && posy > 0){
+    sources[2*n_source+1] = atan(posy/posx)/PI + 1;
+  }else if(posx < 0 && posy < 0){
+    sources[2*n_source+1] = atan(posy/posx)/PI - 1;
+  } else {
+    sources[2*n_source+1] = atan(posy/posx)/PI;
+  }
+
+  return n_source+1;
 }
 
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
