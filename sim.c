@@ -18,7 +18,8 @@ double max_angle = PI/3;
 int main(){
   
   FILE* f;
-  int i,j,k,ndx,st;
+  int i,j,k,ndx,found,st,range=4;
+  double max;
   double opening = op();
   int nofstrip;
   double output[200];
@@ -36,7 +37,7 @@ int main(){
   double nofphot[20] = 
     {1000,1000,1200,900,900,1500,700,0,0,0,0,0,0,0,0,0,0,0,0,0};
   double noise = 10000.;
-  int n_source = 10;
+  int n_source = 15;
   int turn = 100;
 
 #if RANDOM_SKY == 1
@@ -56,9 +57,13 @@ int main(){
   printf("   !!Sources are picked randomly");
 #endif
   printf("   - # of sources  : %d\n",n_source);
+  
+  totcount = noise;
+  for(i=0;i<n_source;i++) totcount += nofphot[i];
+
   for(i=0;i<n_source;i++){
-    printf("    - %d --> Theta : %5.2f*PI    Phi : %5.2f*PI    Photon per Rotation : %5.2f\n"
-	   ,i+1,theta[i],phi[i],nofphot[i]);
+    printf("    - %2d --> Theta : %5.2f*PI    Phi : %5.2f*PI    Intensity : %7.2f   Relative : %5.2f perc\n"
+	   ,i+1,theta[i],phi[i],nofphot[i],nofphot[i]*100/totcount);
   }
   printf("   - Background noise : %5.2f \n",noise);
   printf("\n\nMonte-Carlo simulation is started...\n");
@@ -80,14 +85,43 @@ int main(){
  
     st = corr(map,obs,L,d,offset);
     n_source = loc_source(sources,map,banned,k,L);
+
+    st = lsf(fit,init_obs,sources,n_source+2,L,d,offset);
+
+    printf("Three highest is picked...\n");
+
+    for(i=n_source-1;i<n_source+2;i++){
+      printf("  - %2d --> Theta : %5.2f*PI    Phi : %5.2f*PI  \n",i+2-n_source,sources[2*i],sources[2*i+1]);
+    }
+
+    max = 0;
+    for(i=0;i<3;i++) {
+      if(fit[n_source+i] > max) {
+	max = fit[n_source+i];
+	found = n_source+i-1;
+      }
+    }
+
+    sources[2*(n_source-1)]   = sources[2*(found)];
+    sources[2*(n_source-1)+1] = sources[2*(found)+1];
+    for(i=-range;i<range+1;i++){
+      for(j=-range;j<range+1;j++){
+	banned[((int)sources[2*(found)+7]+j)*256+((int)sources[2*(found)+6]+i)] = 1;
+      }
+    }
+
     st = lsf(fit,init_obs,sources,n_source,L,d,offset);
 
+    printf("\n\nCurrent data : \n\n");
+
     for(i=0;i<n_source;i++){
-    printf("  - %2d --> Theta : %5.2f*PI    Phi : %5.2f*PI    Intensity : %7.2f   Relative Intensity : %5.2f perc\n"
-    ,i+1,sources[2*i],sources[2*i+1],fit[i+1]*totcount/(opening*turn),fit[i+1]*100);
+      printf("  - %2d --> Theta : %5.2f*PI    Phi : %5.2f*PI    Intensity : %7.2f   Relative Intensity : %5.2f perc\n"
+	     ,i+1,sources[2*i],sources[2*i+1],fit[i+1]*totcount/(opening*turn),fit[i+1]*100);
     }
+
     printf("\n  * Background Intensity : %5.2f                                    Relative Intensity : %5.2f perc\n\n"
-    ,fit[0]*totcount/(opening*turn),fit[0]*100);
+	   ,fit[0]*totcount/(opening*turn),fit[0]*100);
+
     
     for(i=0;i<2000;i++) obs[i] = init_obs[i];
     count = clean(obs,fit,sources,n_source,count,offset,L,d);

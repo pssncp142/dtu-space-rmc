@@ -72,43 +72,59 @@ int loc_source(double sources[], double map[], double banned[], int n_source, do
   int i,j,k,l,m,n,st;
   init();
 
-  int x_ndx, y_ndx;
-  int range=3;
-  double sum=0;
-  double max, posx=0, posy=0, max_angle=PI/3;
-  max = -1;
+  int x_ndx[5], y_ndx[5];
+  int range=4,search=3,same;
+  double max, sum, max_angle=PI/3;
+  double posx[5]={0};
+  double posy[5]={0}; 
+
+  for(k=0;k<search;k++){
+
+    max = -1;
+    sum =  0;
   
-  for(i=0;i<256;i++){
-    for(j=0;j<256;j++){
-      if(banned[j*256+i]==0){
-	if(map[j*256+i] > max){
-	  max = map[j*256+i];
-	  x_ndx = i;
-	  y_ndx = j;
+    for(i=0;i<256;i++){
+      for(j=0;j<256;j++){
+	if(banned[j*256+i]==0){
+	  same = 0;
+	  for(l=0;l<k;l++){
+	    if((i<x_ndx[l]+(range+1)) && (i>x_ndx[l]-(range+1)) && (j<y_ndx[l]+(range+1)) && (j>y_ndx[l]-(range+1)))
+	      same = 1;
+	  }
+	  if(!same){
+	    if(map[j*256+i] > max){
+	      max = map[j*256+i];
+	      x_ndx[k] = i;
+	      y_ndx[k] = j;
+	    }
+	  }
 	}
       }
     }
-  }
-
-  for(i=-range;i<range+1;i++){
-    for(j=-range;j<range+1;j++){
-      banned[(y_ndx+j)*256+(x_ndx+i)] = 1;
-      posx += (((x_ndx+i)-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5))*map[(y_ndx+j)*256+(x_ndx+i)];
-      posy += (((y_ndx+j)-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5))*map[(y_ndx+j)*256+(x_ndx+i)];
-      sum += map[(y_ndx+j)*256+(x_ndx+i)];
+    
+    for(i=-range;i<range+1;i++){
+      for(j=-range;j<range+1;j++){
+	posx[k] += (((x_ndx[k]+i)-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5))*map[(y_ndx[k]+j)*256+(x_ndx[k]+i)];
+	posy[k] += (((y_ndx[k]+j)-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5))*map[(y_ndx[k]+j)*256+(x_ndx[k]+i)];
+	sum += map[(y_ndx[k]+j)*256+(x_ndx[k]+i)];
+      }
     }
-  }
 
-  posx /= sum;
-  posy /= sum;
+    posx[k] /= sum;
+    posy[k] /= sum;
 
-  sources[2*n_source] = atan(sqrt((posx*posx+posy*posy)/(L*L)))/PI;
-  if(posx < 0 && posy > 0){
-    sources[2*n_source+1] = atan(posy/posx)/PI + 1;
-  }else if(posx < 0 && posy < 0){
-    sources[2*n_source+1] = atan(posy/posx)/PI - 1;
-  } else {
-    sources[2*n_source+1] = atan(posy/posx)/PI;
+    sources[2*(n_source+k)] = atan(sqrt((posx[k]*posx[k]+posy[k]*posy[k])/(L*L)))/PI;
+    if(posx[k] < 0 && posy[k] > 0){
+      sources[2*(n_source+k)+1] = atan(posy[k]/posx[k])/PI + 1;
+    }else if(posx[k] < 0 && posy[k] < 0){
+      sources[2*(n_source+k)+1] = atan(posy[k]/posx[k])/PI - 1;
+    } else {
+      sources[2*(n_source+k)+1] = atan(posy[k]/posx[k])/PI;
+    }
+
+    sources[2*(n_source+k)+6] = x_ndx[k];
+    sources[2*(n_source+k)+7] = y_ndx[k];
+  
   }
 
   return n_source+1;
