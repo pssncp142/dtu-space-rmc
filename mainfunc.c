@@ -9,8 +9,8 @@
 |                                                                   |
 |  variables needed in calculations :                               |
 |                                                                   |
-| %  *map - correlation map
-| %  *fit - result of lsf calculation 0->background                 |
+| %  *map - correlation map                                         |
+| %  *fit - result of lsf calculation 0->background                 | 
 | %  *obs - observation data for all strips                         |
 | %  *banned - banned locations 1->forbidden 0->available           |
 | %  *sources - found source list 2*k-->theta 2*k+1-->phi           |
@@ -53,12 +53,12 @@ void init(){
 }
 
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
-
 //erase all found sources from the observation data
 double clean(double obs[], double fit[], double sources[], int n_source, double count, double offset, double L, double d){
 
-  int i,j,st;
+  int i,j,ndx,st;
   double model[2000];
+  double max=-1;
  
   for(j=0;j<n_source;j++){
     st = mod(model,sources[j*2],sources[j*2+1],offset,L,d);
@@ -70,7 +70,6 @@ double clean(double obs[], double fit[], double sources[], int n_source, double 
 }
 
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
-
 //finds three highest possible sources from the correlation map
 //!!!one trick data is outputted as ;
 //sources[2*(n_source+k)]   -->theta
@@ -79,14 +78,14 @@ double clean(double obs[], double fit[], double sources[], int n_source, double 
 //sources[2*(n_source+k)+7] -->y_ndx --> to be able to add the best in the banned map
 int loc_source(double sources[], double map[], double banned[], int n_source, double L){  
   
-  int i,j,k,l,st;
+  int i,j,k,l,m,n,st;
   init();
 
-  int x_ndx[3], y_ndx[3];
-  int range=4,search=3,same;
+  int x_ndx[5], y_ndx[5];
+  int range=8,search=3,same;
   double max, sum, max_angle=PI/3;
-  double posx[3]={0};
-  double posy[3]={0}; 
+  double posx[5]={0};
+  double posy[5]={0}; 
 
   for(k=0;k<search;k++){
 
@@ -112,8 +111,8 @@ int loc_source(double sources[], double map[], double banned[], int n_source, do
       }
     }
     
-    for(i=-range;i<range+1;i++){
-      for(j=-range;j<range+1;j++){
+    for(i=-1;i<2;i++){
+      for(j=-1;j<2;j++){
 	posx[k] += (((x_ndx[k]+i)-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5))*map[(y_ndx[k]+j)*256+(x_ndx[k]+i)];
 	posy[k] += (((y_ndx[k]+j)-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5))*map[(y_ndx[k]+j)*256+(x_ndx[k]+i)];
 	sum += map[(y_ndx[k]+j)*256+(x_ndx[k]+i)];
@@ -159,6 +158,7 @@ int corr(double map[], double obs[], double L, double d, double offset){
   double model[2000],sbtr_obs[2000];
   double half_map = L*tan(max_angle);
   double half_st = 0.5*L*tan(max_angle)/(256*0.5);
+  double st_map = half_st-half_map;
   double all_st = L*tan(max_angle)/(256*0.5);
   double L_2 = L*L;
   int grid_2 = 256*256; 
@@ -168,8 +168,8 @@ int corr(double map[], double obs[], double L, double d, double offset){
   
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){
-      posx = i*all_st+half_st-half_map;
-      posy = j*all_st+half_st-half_map;
+      posx = i*all_st+st_map;
+      posy = j*all_st+st_map;
       theta = atan(sqrt((posx*posx+posy*posy)/(L_2)));
       if(posx < 0 && posy > 0){
 	phi = atan(posy/posx) + PI;
@@ -252,19 +252,17 @@ double real(double obs[], int n_source, double* theta, double* phi, double offse
   int i,j,k,l,m,st;
   
   double count = 0;
-  double prob[1000], rate[10];
-  int randphot;
-  double rnd,check,var;
-  double PIL_over_d = PI*L/d;
-  double PI2_over_256 = 2*PI/256;
-  double offset_PI = offset*PI;
-  double times_PI[7]={0,PI,2*PI,3*PI,4*PI,5*PI,6*PI};
-  double phi_PI[50]; for(i=0;i<n_source;i++) {phi_PI[i] = phi[i]*PI;}
-  double theta_PI[50]; for(i=0;i<n_source;i++) {theta_PI[i] = theta[i]*PI;}
-  double st_ob = nofstrip*opening;
-
   for(i=0;i<2000;i++) obs[i] = 0;
   noise *= opening;
+  double prob[1000], rate[10];
+  int randphot;
+  double rnd,check,var; 
+  double offset_PI[]={offset*PI,(offset+1)*PI,(offset+2)*PI,(offset+3)*PI,(offset+4)*PI,(offset+5)*PI};
+  double PI2_over_256=2*PI/256;
+  double PIL_over_d_tan_theta[50]; for(i=0;i<n_source;i++) PIL_over_d_tan_theta[i] = PI*L*tan(theta[i]*PI)/d;
+  double phi_PI[50]; for(i=0;i<n_source;i++) phi_PI[i] = phi[i]*PI;
+  double PIL_over_d = PI*L/d;
+
   srand(time(NULL));
 
   for(m=0;m<n_source;m++){
@@ -275,9 +273,9 @@ double real(double obs[], int n_source, double* theta, double* phi, double offse
     }
     for(l=0;l<turn;l++){
       for(i=0; i<256; i++){
-	rate[0] = sawtooth(PIL_over_d*tan(theta_PI[m])*cos(i*PI2_over_256-phi_PI[m])+offset_PI,PI); 
+	rate[0] = sawtooth(PIL_over_d_tan_theta[m]*cos(i*PI2_over_256-phi_PI[m])+offset_PI[0],PI); 
 	for(j=1; j<nofstrip-1; j++){
-	  rate[j] = rate[j-1] + sawtooth(PIL_over_d*tan(theta_PI[m])*cos(i*PI2_over_256-phi_PI[m])+offset_PI+times_PI[j],PI);
+	  rate[j] = rate[j-1] + sawtooth(PIL_over_d_tan_theta[m]*cos(i*PI2_over_256-phi_PI[m])+offset_PI[j],PI);
 	}
 	rnd = (double)rand()/RAND_MAX;
 	for (j=0; j<1000; j++){
@@ -291,7 +289,7 @@ double real(double obs[], int n_source, double* theta, double* phi, double offse
 	  if(j==randphot){
 	    break;
 	  }
-	  rnd = (double)rand()/RAND_MAX*st_ob;
+	  rnd = (double)rand()/RAND_MAX*nofstrip*opening;
 	  for(k=0;k<nofstrip-1;k++){
 	    if(rnd < rate[k]){
 	      ++obs[k*256+i]; break;}
@@ -346,14 +344,12 @@ int mod(double model[], double theta, double phi, double offset, double L, doubl
   int i,j,st;
   double PIL_over_d_tan_theta_PI = PI*L/d*tan(theta*PI);
   double PI2_over_256 = 2*PI/256;
-  double phi_PI = phi*PI;
-  double offset_PI = offset*PI;
-  double times_PI[7] = {0.,PI,2*PI,3*PI,4*PI,5*PI,6*PI};
+  double offset_PI[6] = {offset*PI,(offset+1)*PI,(offset+2)*PI,(offset+3)*PI,(offset+4)*PI,(offset+5)*PI};
   double st_ob = nofstrip*opening;
 
   for(i=0; i<256; i++){
     for(j=0; j<nofstrip; j++){
-      model[j*256+i] = sawtooth(PIL_over_d_tan_theta_PI*cos(i*PI2_over_256-times_PI[j])+offset_PI+times_PI[j],PI)/st_ob;
+      model[j*256+i] = sawtooth(PIL_over_d_tan_theta_PI*cos(i*PI2_over_256-phi*PI)+offset_PI[j],PI)/(st_ob);
     }
   }
   return 1;

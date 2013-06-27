@@ -18,15 +18,16 @@ double max_angle = PI/3;
 int main(){
   
   FILE* f;
-  int i,j,k,ndx,found,st,range=4;
+  int i,j,k,m,n,ndx,x_ndx,y_ndx,found,st,range=4;
   double max;
+  double tmp_s[2];
   double opening = op();
   int nofstrip;
-  double output[200];
   double init_obs[2000]={0};
   double obs[2000]={0};
   double map[70000]={0};
   double banned[70000]={0};
+  double old_fit[400]={0};
   double fit[400]={0};
   double sources[100]={0};
   double count,totcount;
@@ -37,7 +38,7 @@ int main(){
   double nofphot[20] = 
     {1000,1000,1200,900,900,1500,700,0,0,0,0,0,0,0,0,0,0,0,0,0};
   double noise = 10000.;
-  int n_source = 15;
+  int n_source = 8;
   int turn = 100;
 
 #if RANDOM_SKY == 1
@@ -79,12 +80,16 @@ int main(){
 
   printf("Source analysis by removal of the strongest one...\n\n");
 
+  n_source = 0;
+
   for(k=0;;k++){
    
+  again:
+
     printf("\nIteration %d\n\n",k+1);
  
     st = corr(map,obs,L,d,offset);
-    n_source = loc_source(sources,map,banned,k,L);
+    n_source = loc_source(sources,map,banned,n_source,L);
 
     st = lsf(fit,init_obs,sources,n_source+2,L,d,offset);
 
@@ -112,17 +117,65 @@ int main(){
 
     st = lsf(fit,init_obs,sources,n_source,L,d,offset);
 
+    if(fit[n_source]<0.02){
+      /*printf("Searching limit is reached. Sorting the sources...\n");
+      --n_source;
+      for(j=0;j<n_source;j++){
+	max = 0;
+	found = j;
+	for(i=j;i<n_source;i++){
+	  if(old_fit[i+1]>max){
+	    max = old_fit[i+1];
+	    found = i;
+	  }
+	  //printf("%f %d\n ",max*totcount/(opening*turn),found);
+	}
+	//printf("%d %d\n",found,j);
+	if(found!=j){
+	  //printf("%d\n",found);
+	  tmp_s[0] = sources[2*found];
+	  tmp_s[1] = sources[2*found+1];
+	  for(i=found-1;i==j;i--){
+	    sources[2*(i+1)] = sources[2*i];
+	    sources[2*(i+1)+1] = sources[2*i+1];
+	  }
+	  sources[2*j] = tmp_s[0];
+	  sources[2*j+1] = tmp_s[1];
+	  n_source = j + 1;
+	  ++k;
+	  for(i=0;i<70000;i++) banned[i]=0;
+	  for(i=0;i<n_source;i++){
+	    x_ndx = (int) floor(tan(sources[2*i])*cos(sources[2*i+1])*128/tan(max_angle)+128);
+	    y_ndx = (int) floor(tan(sources[2*i])*sin(sources[2*i+1])*128/tan(max_angle)+128);
+	    printf("%d %d\n",x_ndx,y_ndx);
+	    for(m=-range; m<=range; m++){
+	      for(n=-range; n<=range; n++){
+		banned[(y_ndx+n)*256+(x_ndx+m)] = 1;
+	      }
+	    }
+	  }
+	  for(i=0;i<2000;i++) obs[i] = init_obs[i];
+	  count = clean(obs,fit,sources,n_source,count,offset,L,d);
+	  goto again;
+	}
+	}*/	
+
+      printf("Quitting...\n");
+      break;
+    }
+
+    for(i=0;i<=n_source;i++) old_fit[i] = fit[i];
+
     printf("\n\nCurrent data : \n\n");
 
     for(i=0;i<n_source;i++){
-      printf("  - %2d --> Theta : %5.2f*PI    Phi : %5.2f*PI    Intensity : %7.2f   Relative Intensity : %5.2f perc\n"
+      printf("  - %2d --> Theta : %5.3f    Phi : %7.3f    Intensity : %7.2f         Relative Intensity : %5.2f perc\n"
 	     ,i+1,sources[2*i],sources[2*i+1],fit[i+1]*totcount/(opening*turn),fit[i+1]*100);
     }
 
     printf("\n  * Background Intensity : %5.2f                                    Relative Intensity : %5.2f perc\n\n"
 	   ,fit[0]*totcount/(opening*turn),fit[0]*100);
-
-    
+            
     for(i=0;i<2000;i++) obs[i] = init_obs[i];
     count = clean(obs,fit,sources,n_source,count,offset,L,d);
 
