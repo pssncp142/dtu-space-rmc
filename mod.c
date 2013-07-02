@@ -7,9 +7,9 @@ int main(){
   int sp = n();
   int i,j;
   double model[2000];
-  double phi=0.;
-  double theta=0.3;
-  double offset=0.;
+  double phi=0.4;
+  double theta=0.2;
+  double offset=0.2;
   double L=20.;
   double d=1.;
 

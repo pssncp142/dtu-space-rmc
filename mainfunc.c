@@ -34,6 +34,7 @@
 #include "time.h"
 
 #include "common.h"
+#include "3d_cart_vec.h"
 
 #define PI 3.14159f
 
@@ -341,52 +342,7 @@ int mod(double model[], double theta, double phi, double offset, double L, doubl
 {
   init();
   int i,j,k,st;  
-
-  /*///////////////////////////////////////
-  double gamma=0.*PI;
-  double alpha=0.*PI;
-  double beta=0.*PI;
-  theta *= PI;
-  phi *= PI;
-  double PI2_over_256 = 2*PI/256;
-  double PIL_over_d = PI*L/d;
-  double offset_PI[6] = {offset*PI,(offset+1)*PI,(offset+2)*PI,(offset+3)*PI,(offset+4)*PI,(offset+5)*PI};
-  double st_ob = nofstrip*opening;
-
-  double gammap[300];
-  double thetap[300];
-  double phip[300];
-  double X,Y,Z,C;
-  for(i=0;i<256;i++){
-    thetap[i] = acos(sin(beta)*sin(theta)*
-		     (cos(i*PI2_over_256+alpha)*cos(phi)+sin(i*PI2_over_256+alpha)*sin(phi))+
-		     cos(beta)*cos(theta));
-    X = sin(beta)/cos(thetap[i])*(cos(alpha+i*PI2_over_256)*cos(i*PI2_over_256)+sin(alpha+i*PI2_over_256)*sin(i*PI2_over_256));
-    Y = cos(beta)/cos(thetap[i]);
-    Z = (X+Y*sqrt(Y*Y+X*X-1))/(X*X+Y*Y);
-    C = sqrt(1-Z*Z);
-    phip[i] = ((1/(cos(thetap[i])*cos(thetap[i]))*
-		(sin(theta)*(Z)*(cos(i*PI2_over_256)*cos(phi)+sin(i*PI2_over_256)*sin(phi))+cos(theta)*(C))-1)
-	       /(1/(cos(thetap[i])*cos(thetap[i]))-1));
-    X = sin(beta)/cos(thetap[i])*(cos(gamma+i*PI2_over_256)*cos(i*PI2_over_256)+sin(gamma+i*PI2_over_256)*sin(i*PI2_over_256));
-    Y = cos(beta)/cos(thetap[i]);
-    Z = (X+Y*sqrt(Y*Y+X*X-1))/(X*X+Y*Y);
-    C = sqrt(1-Z*Z);
-    gammap[i] = ((1/(cos(thetap[i])*cos(thetap[i]))*
-		(sin(theta)*(Z)*(cos(i*PI2_over_256)*cos(phi)+sin(i*PI2_over_256)*sin(phi))+cos(theta)*(C))-1)
-	       /(1/(cos(thetap[i])*cos(thetap[i]))-1));
-    //printf("%f %f %f\n",asin(Z)/PI,acos(phip[i])/PI*0.5,i*PI2_over_256/PI*0.5-phi/PI*0.5);
-    }
-
-    printf("A");
-
-  for(i=0; i<256; i++){
-    for(j=0; j<nofstrip; j++){
-      model[j*256+i] = sawtooth(PIL_over_d*tan(thetap[i])*cos(acos(phip[i]))+offset_PI[j],PI)/(st_ob)*frac[i];
-    }
-    }*/
-  ////////////////////////////////////////////////////
-
+  
   double PIL_over_d_tan_theta_PI = PI*L/d*tan(theta*PI);
   double PI2_over_256 = 2*PI/256;
   double offset_PI[6] = {offset*PI,(offset+1)*PI,(offset+2)*PI,(offset+3)*PI,(offset+4)*PI,(offset+5)*PI};
@@ -394,8 +350,45 @@ int mod(double model[], double theta, double phi, double offset, double L, doubl
   theta *= PI;
   phi *= PI;
 
-  double frac[300];
-  for(i=0;i<256;i++) frac[i] = 0;
+  ///////////////////////////////////////
+  double beta = 0.1*PI, alpha = -0.5*PI;
+  double thetap[300], phip[300];
+  double tel_axis[3], rot_axis[3], sun_axis[3], x_axis[3], source[3];
+  
+  source[0] = sin(theta)*cos(phi); source[1] = sin(theta)*sin(phi); source[2] = cos(theta);
+  tel_axis[0] = sin(beta)*cos(0); tel_axis[1] = sin(beta)*sin(0); tel_axis[2] = cos(beta);
+  rot_axis[0] = 0.; rot_axis[1] = 0.; rot_axis[2] = 1.;
+  x_axis[0] = 1.; x_axis[1] = 0; x_axis[2] = 0;
+
+  vec_ort_wc(sun_axis,rot_axis,tel_axis);
+  vec_scap(-1,sun_axis);
+  vec_rotate(tel_axis,-alpha,sun_axis);
+  alpha = vec_angle(rot_axis,sun_axis,x_axis);
+
+  printf("%f \n",alpha/(PI));
+
+  for(i=0;i<256;i++){
+    
+    tel_axis[0] = sin(beta)*cos(i*PI2_over_256+alpha);
+    tel_axis[1] = sin(beta)*sin(i*PI2_over_256+alpha);
+    x_axis[0] = cos(i*PI2_over_256);
+    x_axis[1] = sin(i*PI2_over_256);
+    x_axis[2] = 0;
+
+    thetap[i] = acos(vec_dotp(tel_axis,source)/(vec_norm(source)*vec_norm(tel_axis)));
+    phip[i] = vec_angle(tel_axis,x_axis,source);
+    printf("%f %f \n",thetap[i],phip[i]);
+  }
+
+  for(i=0; i<256; i++){
+    for(j=0; j<nofstrip; j++){
+      model[j*256+i] = sawtooth(PI*L/d*tan(thetap[i])*cos(phip[i])+offset_PI[j],PI)/(st_ob);
+    }
+  }
+
+  /*  ///////////////////////////////////////
+
+  double frac[300]={0};
   double det = 55/2;
   double mask = 85/2;
   double height = 20;
@@ -449,13 +442,11 @@ int mod(double model[], double theta, double phi, double offset, double L, doubl
     if(pos[0] > det && pos[2] > det && pos[1] < -det && pos[3] < -det)  frac[i]=1;
   }
 
-  
-
   for(i=0; i<256; i++){
     for(j=0; j<nofstrip; j++){
       model[j*256+i] = sawtooth(PIL_over_d_tan_theta_PI*cos(i*PI2_over_256-phi*PI)+offset_PI[j],PI)/(st_ob)*frac[i];
     }
-  }
+    }*/
   return 1;
 }
 
