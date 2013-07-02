@@ -1,22 +1,35 @@
 #include "stdio.h"
-#include "stdlib.h"
-
 #include "common.h"
 
 int main(){
-
-  int i,j,st;
+  
+  FILE* f;
   int sp = n();
-  double data[2000];
-  st = real(data,0.3,1.2,0.5,50,5,1000.,10.,10);
-  FILE* f = fopen("strip.txt","w+");
-  for(i=0;i<256;i++){
-    for(j=0;j<sp;j++){
-      fprintf(f,"%f ",data[j*256+i]);
+  int i,j;
+  double obs[2000];
+  double phi[]={0.,0.,0.};
+  double theta[]={0.3,0.2,0.1};
+  double nofphot[]={1000.,1000.,1000.};
+  double noise=0000.;
+  double offset=0.;
+  double L=20.;
+  double d=1.;
+  int n_source=1;
+  int turn=100;
+
+  real(obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn);
+  
+  f=fopen("strip.txt","w+");
+
+  for(j=0;j<256;j++){
+    for(i=0;i<sp;i++){
+      fprintf(f,"%f ",obs[i*256+j]);
     }
     fprintf(f,"\n");
   }
   fclose(f);
+
   system("./plot.py");
 
+  return 1;
 }

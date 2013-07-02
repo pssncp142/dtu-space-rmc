@@ -1,13 +1,31 @@
 #include "stdio.h"
-#include "stdlib.h"
-
 #include "common.h"
 
 int main(){
-
+  
+  FILE* f;
   int sp = n();
-  double **data = mod(0.2,1.2,0.5,50,5);
-  wspfile(data,sp);
+  int i,j;
+  double model[2000];
+  double phi=0.;
+  double theta=0.3;
+  double offset=0.;
+  double L=20.;
+  double d=1.;
+
+  mod(model,theta,phi,offset,L,d);
+  
+  f=fopen("strip.txt","w+");
+
+  for(j=0;j<256;j++){
+    for(i=0;i<sp;i++){
+      fprintf(f,"%f ",model[i*256+j]);
+    }
+    fprintf(f,"\n");
+  }
+  fclose(f);
+
   system("./plot.py");
 
+  return 1;
 }

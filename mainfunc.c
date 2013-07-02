@@ -254,7 +254,7 @@ double real(double obs[], int n_source, double* theta, double* phi, double offse
   double count = 0;
   for(i=0;i<2000;i++) obs[i] = 0;
   noise *= opening;
-  double prob[1000], rate[10];
+  double prob[1000], rate[10], model[2000];
   int randphot;
   double rnd,check,var; 
   double offset_PI[]={offset*PI,(offset+1)*PI,(offset+2)*PI,(offset+3)*PI,(offset+4)*PI,(offset+5)*PI};
@@ -266,6 +266,7 @@ double real(double obs[], int n_source, double* theta, double* phi, double offse
   srand(time(NULL));
 
   for(m=0;m<n_source;m++){
+    mod(model,theta[m],phi[m],offset,L,d); 
     var = nofphot[m]*opening/256;
     prob[0] = exp(-var);
     for(l=1; l<1000; l++){
@@ -273,9 +274,9 @@ double real(double obs[], int n_source, double* theta, double* phi, double offse
     }
     for(l=0;l<turn;l++){
       for(i=0; i<256; i++){
-	rate[0] = sawtooth(PIL_over_d_tan_theta[m]*cos(i*PI2_over_256-phi_PI[m])+offset_PI[0],PI); 
-	for(j=1; j<nofstrip-1; j++){
-	  rate[j] = rate[j-1] + sawtooth(PIL_over_d_tan_theta[m]*cos(i*PI2_over_256-phi_PI[m])+offset_PI[j],PI);
+	rate[0] = model[i]; 
+	for(j=1; j<nofstrip; j++){
+	  rate[j] = rate[j-1] + model[(j-1)*256+i];
 	}
 	rnd = (double)rand()/RAND_MAX;
 	for (j=0; j<1000; j++){
@@ -290,11 +291,9 @@ double real(double obs[], int n_source, double* theta, double* phi, double offse
 	    break;
 	  }
 	  rnd = (double)rand()/RAND_MAX*nofstrip*opening;
-	  for(k=0;k<nofstrip-1;k++){
+	  for(k=0;k<nofstrip;k++){
 	    if(rnd < rate[k]){
 	      ++obs[k*256+i]; break;}
-	    if(k == nofstrip-2 ){
-	      ++obs[(nofstrip-1)*256+i];}
 	  }
 	}
       }
@@ -341,15 +340,120 @@ double real(double obs[], int n_source, double* theta, double* phi, double offse
 int mod(double model[], double theta, double phi, double offset, double L, double d) 
 {
   init();
-  int i,j,st;
+  int i,j,k,st;
+
+  /*///////////////////////////////////////
+  double gamma=0.*PI;
+  double alpha=0.*PI;
+  double beta=0.*PI;
+  theta *= PI;
+  phi *= PI;
+  double PI2_over_256 = 2*PI/256;
+  double PIL_over_d = PI*L/d;
+  double offset_PI[6] = {offset*PI,(offset+1)*PI,(offset+2)*PI,(offset+3)*PI,(offset+4)*PI,(offset+5)*PI};
+  double st_ob = nofstrip*opening;
+
+  double gammap[300];
+  double thetap[300];
+  double phip[300];
+  double X,Y,Z,C;
+  for(i=0;i<256;i++){
+    thetap[i] = acos(sin(beta)*sin(theta)*
+		     (cos(i*PI2_over_256+alpha)*cos(phi)+sin(i*PI2_over_256+alpha)*sin(phi))+
+		     cos(beta)*cos(theta));
+    X = sin(beta)/cos(thetap[i])*(cos(alpha+i*PI2_over_256)*cos(i*PI2_over_256)+sin(alpha+i*PI2_over_256)*sin(i*PI2_over_256));
+    Y = cos(beta)/cos(thetap[i]);
+    Z = (X+Y*sqrt(Y*Y+X*X-1))/(X*X+Y*Y);
+    C = sqrt(1-Z*Z);
+    phip[i] = ((1/(cos(thetap[i])*cos(thetap[i]))*
+		(sin(theta)*(Z)*(cos(i*PI2_over_256)*cos(phi)+sin(i*PI2_over_256)*sin(phi))+cos(theta)*(C))-1)
+	       /(1/(cos(thetap[i])*cos(thetap[i]))-1));
+    X = sin(beta)/cos(thetap[i])*(cos(gamma+i*PI2_over_256)*cos(i*PI2_over_256)+sin(gamma+i*PI2_over_256)*sin(i*PI2_over_256));
+    Y = cos(beta)/cos(thetap[i]);
+    Z = (X+Y*sqrt(Y*Y+X*X-1))/(X*X+Y*Y);
+    C = sqrt(1-Z*Z);
+    gammap[i] = ((1/(cos(thetap[i])*cos(thetap[i]))*
+		(sin(theta)*(Z)*(cos(i*PI2_over_256)*cos(phi)+sin(i*PI2_over_256)*sin(phi))+cos(theta)*(C))-1)
+	       /(1/(cos(thetap[i])*cos(thetap[i]))-1));
+    //printf("%f %f %f\n",asin(Z)/PI,acos(phip[i])/PI*0.5,i*PI2_over_256/PI*0.5-phi/PI*0.5);
+    }
+
+    printf("A");
+
+  for(i=0; i<256; i++){
+    for(j=0; j<nofstrip; j++){
+      model[j*256+i] = sawtooth(PIL_over_d*tan(thetap[i])*cos(acos(phip[i]))+offset_PI[j],PI)/(st_ob)*frac[i];
+    }
+    }*/
+  ////////////////////////////////////////////////////
+
   double PIL_over_d_tan_theta_PI = PI*L/d*tan(theta*PI);
   double PI2_over_256 = 2*PI/256;
   double offset_PI[6] = {offset*PI,(offset+1)*PI,(offset+2)*PI,(offset+3)*PI,(offset+4)*PI,(offset+5)*PI};
   double st_ob = nofstrip*opening;
+  theta *= PI;
+  phi *= PI;
+
+  double frac[300];
+  for(i=0;i<256;i++) frac[i] = 0;
+  double det = 55/2;
+  double mask = 85/2;
+  double height = 20;
+  double pos[4];
+  for(i=0;i<256;i++){
+    pos[0] = mask-tan(theta)*cos(i*PI2_over_256-phi)*height;
+    pos[1] = -mask-tan(theta)*cos(i*PI2_over_256-phi)*height;
+    pos[2] = mask-tan(theta)*sin(i*PI2_over_256-phi)*height;
+    pos[3] = -mask-tan(theta)*sin(i*PI2_over_256-phi)*height;
+    for(j=0;j<2;j++){
+      for(k=0;k<2;k++){
+	if(pos[j] < det && pos[j] > -det){	  
+	  if(pos[2+k] < det && pos[2+k] > -det){
+	    if(j==0){
+	      if(k==0){
+		frac[i] = (det+pos[j])*(det+pos[2+k])/pow(det*2,2);
+	      } else {
+		frac[i] = (det+pos[j])*(det-pos[2+k])/pow(det*2,2);
+	      }
+	    } else {
+	      if(k==0){
+		frac[i] = (det-pos[j])*(det+pos[2+k])/pow(det*2,2);
+	      } else {
+		frac[i] = (det-pos[j])*(det-pos[2+k])/pow(det*2,2);
+	      }
+	    }
+	  }
+	}
+      }
+    }
+    for(j=0;j<2;j++){
+      if(pos[j] < det && pos[j] > -det){
+	if(pos[2] > det && pos[3] < -det){
+	  if(j==0){
+	    frac[i] = (det*2)*(det+pos[j])/pow(det*2,2);
+	  } else {
+	    frac[i] = (det*2)*(det-pos[j])/pow(det*2,2);
+	  }
+	}
+      }
+      if(pos[2+j] < det && pos[2+j] > -det){
+	if(pos[0] > det && pos[1] < -det){
+	  if(j==0){
+	    frac[i] = (det*2)*(det+pos[2+j])/pow(det*2,2);
+	  } else {
+	    frac[i] = (det*2)*(det-pos[2+j])/pow(det*2,2);
+	  }
+	}
+      }
+    }
+    if(pos[0] > det && pos[2] > det && pos[1] < -det && pos[3] < -det)  frac[i]=1;
+  }
+
+  
 
   for(i=0; i<256; i++){
     for(j=0; j<nofstrip; j++){
-      model[j*256+i] = sawtooth(PIL_over_d_tan_theta_PI*cos(i*PI2_over_256-phi*PI)+offset_PI[j],PI)/(st_ob);
+      model[j*256+i] = sawtooth(PIL_over_d_tan_theta_PI*cos(i*PI2_over_256-phi*PI)+offset_PI[j],PI)/(st_ob)*frac[i];
     }
   }
   return 1;
