@@ -87,5 +87,3 @@ int norm0_1(double a[], int n){
   }
   return 1;
 }
-
-

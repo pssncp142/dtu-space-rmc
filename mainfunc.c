@@ -340,7 +340,7 @@ double real(double obs[], int n_source, double* theta, double* phi, double offse
 int mod(double model[], double theta, double phi, double offset, double L, double d) 
 {
   init();
-  int i,j,k,st;
+  int i,j,k,st;  
 
   /*///////////////////////////////////////
   double gamma=0.*PI;
