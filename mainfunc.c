@@ -152,10 +152,11 @@ int corr(double map[], double obs[]){
   int grid_2 = 256*256; 
   for(i=0;i<sp*256;i++) sbtr_obs[i] = obs[i];
   st = subtmean(sbtr_obs,sp);
-
-  printf("%d \n",sp);
   
+  printf("Correlation process :      "); fflush(stdout);
+
   for(i=0;i<256;i++){
+    if(0==i % 25) printf("\b\b\b\b\b%3d%% ",i/25*10); fflush(stdout);
     for(j=0;j<256;j++){
       posx = i*all_st+st_map;
       posy = j*all_st+st_map;
@@ -175,6 +176,8 @@ int corr(double map[], double obs[]){
     }
   }
   
+  printf("\n\n");
+
   norm1_1(data,sp);
 
   for(i=0;i<256;i++){
@@ -315,7 +318,6 @@ double real(double obs[], int n_source, double* theta, double* phi, double* nofp
 }
 
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
-
 //returns modulation function
 //data[256*j+i]
 // j --> strip number
@@ -342,6 +344,10 @@ int mod(double model[], double theta, double phi)
   return 1;
 }
 
+int thickness(){
+  
+}
+
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
 //calculates the illuminated fraction of the detector for every iteration
 //(normalized to 1)
@@ -351,26 +357,30 @@ int frac_detect(double frac[], double thetap[], double phip[]){
   int i,j,k;
 
   double pos[4];
+  double t_c_h, t_s_h;
   for(i=0;i<256;i++){
-    pos[0] = mask-tan(thetap[i])*cos(i*PI2_over_256-phip[i])*height;
-    pos[1] = -mask-tan(thetap[i])*cos(i*PI2_over_256-phip[i])*height;
-    pos[2] = mask-tan(thetap[i])*sin(i*PI2_over_256-phip[i])*height;
-    pos[3] = -mask-tan(thetap[i])*sin(i*PI2_over_256-phip[i])*height;
+    t_c_h = tan(thetap[i])*cos(i*PI2_over_256-phip[i])*height;
+    t_s_h = tan(thetap[i])*sin(i*PI2_over_256-phip[i])*height;
+    pos[0] = mask-t_c_h;
+    pos[1] = -mask-t_c_h;
+    pos[2] = mask-t_s_h;
+    pos[3] = -mask-t_s_h;
+    if(pos[0] > det && pos[2] > det && pos[1] < -det && pos[3] < -det)  {frac[i]=1; goto exit;}
     for(j=0;j<2;j++){
       for(k=0;k<2;k++){
 	if(pos[j] < det && pos[j] > -det){	  
 	  if(pos[2+k] < det && pos[2+k] > -det){
 	    if(j==0){
 	      if(k==0){
-		frac[i] = (det+pos[j])*(det+pos[2+k])/det_2_sq;
+		frac[i] = (det+pos[j])*(det+pos[2+k])/det_2_sq; goto exit;
 	      } else {
-		frac[i] = (det+pos[j])*(det-pos[2+k])/det_2_sq;
+		frac[i] = (det+pos[j])*(det-pos[2+k])/det_2_sq; goto exit;
 	      }
 	    } else {
 	      if(k==0){
-		frac[i] = (det-pos[j])*(det+pos[2+k])/det_2_sq;
+		frac[i] = (det-pos[j])*(det+pos[2+k])/det_2_sq; goto exit;
 	      } else {
-		frac[i] = (det-pos[j])*(det-pos[2+k])/det_2_sq;
+		frac[i] = (det-pos[j])*(det-pos[2+k])/det_2_sq; goto exit;
 	      }
 	    }
 	  }
@@ -381,23 +391,23 @@ int frac_detect(double frac[], double thetap[], double phip[]){
       if(pos[j] < det && pos[j] > -det){
 	if(pos[2] > det && pos[3] < -det){
 	  if(j==0){
-	    frac[i] = det_2*(det+pos[j])/det_2_sq;
+	    frac[i] = det_2*(det+pos[j])/det_2_sq; goto exit;
 	  } else {
-	    frac[i] = det_2*(det-pos[j])/det_2_sq;
+	    frac[i] = det_2*(det-pos[j])/det_2_sq; goto exit;
 	  }
 	}
       }
       if(pos[2+j] < det && pos[2+j] > -det){
 	if(pos[0] > det && pos[1] < -det){
 	  if(j==0){
-	    frac[i] = det_2*(det+pos[2+j])/det_2_sq;
+	    frac[i] = det_2*(det+pos[2+j])/det_2_sq; goto exit;
 	  } else {
-	    frac[i] = det_2*(det-pos[2+j])/det_2_sq;
+	    frac[i] = det_2*(det-pos[2+j])/det_2_sq; goto exit;
 	  }
 	}
       }
     }
-    if(pos[0] > det && pos[2] > det && pos[1] < -det && pos[3] < -det)  frac[i]=1;
+  exit: ;
   }
 
   return 1;
@@ -411,6 +421,7 @@ int calc_angles(double thetap[], double phip[], double theta, double phi){
 
   int i;
   double tel_axis[3], x_axis[3], source[3];
+  double s_beta = sin(beta);
   
   source[0] = sin(theta)*cos(phi); source[1] = sin(theta)*sin(phi); source[2] = cos(theta);
   tel_axis[2] = cos(beta);
@@ -418,8 +429,8 @@ int calc_angles(double thetap[], double phip[], double theta, double phi){
 
   for(i=0;i<256;i++){
     
-    tel_axis[0] = sin(beta)*cos(i*PI2_over_256+alpha_proj);
-    tel_axis[1] = sin(beta)*sin(i*PI2_over_256+alpha_proj);
+    tel_axis[0] = s_beta*cos(i*PI2_over_256+alpha_proj);
+    tel_axis[1] = s_beta*sin(i*PI2_over_256+alpha_proj);
     x_axis[0] = cos(i*PI2_over_256);
     x_axis[1] = sin(i*PI2_over_256);
 

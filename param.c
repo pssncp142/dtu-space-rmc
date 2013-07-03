@@ -33,7 +33,7 @@ int configure(){
   mask   = 85; 
   height = 20;
   alpha  = 0.25*PI;
-  beta   = 0.1*PI;
+  beta   = 1e-20*PI;
   sp     = n();
   opening= op();
   

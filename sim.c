@@ -36,7 +36,7 @@ int main(){
   double nofphot[20] = 
     {10000,1000,1200,900,900,1500,700,0,0,0,0,0,0,0,0,0,0,0,0,0};
   double noise = 10000.;
-  int n_source = 15;
+  int n_source = 10;
   int turn = 100;
 
 #if RANDOM_SKY == 1
@@ -85,7 +85,6 @@ int main(){
   again:
 
     printf("\nIteration %d\n\n",k+1);
- 
     st = corr(map,obs);
 
     n_source = loc_source(sources,map,banned,n_source);
