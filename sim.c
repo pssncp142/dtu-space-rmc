@@ -7,22 +7,20 @@
 #define RANDOM_SKY 1
 
 #include "common.h"
+#include "param.h"
 
 int random_sky(double*,double*,double*,int);
 
-double offset = 0.;
-double L = 50;
-double d = 5;
 double max_angle = PI/3;
 
 int main(){
+
+  configure();
   
   FILE* f;
   int i,j,k,m,n,ndx,x_ndx,y_ndx,found,st,range=4;
   double max;
   double tmp_s[2];
-  double opening = op();
-  int sp;
   double init_obs[2000]={0};
   double obs[2000]={0};
   double map[70000]={0};
@@ -32,13 +30,13 @@ int main(){
   double sources[100]={0};
   double count,totcount;
   double theta[20] = 
-    {0.3,0.2,0.3,0.2,0.1,0.15,0.3,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    {0.2,0.2,0.3,0.2,0.1,0.15,0.3,0,0,0,0,0,0,0,0,0,0,0,0,0};
   double phi[20] = 
-    {1.2,0.2,0.7,-0.2,1.5,1,0.4,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    {0.8,0.2,0.7,-0.2,1.5,1,0.4,0,0,0,0,0,0,0,0,0,0,0,0,0};
   double nofphot[20] = 
-    {1000,1000,1200,900,900,1500,700,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    {10000,1000,1200,900,900,1500,700,0,0,0,0,0,0,0,0,0,0,0,0,0};
   double noise = 10000.;
-  int n_source = 8;
+  int n_source = 15;
   int turn = 100;
 
 #if RANDOM_SKY == 1
@@ -69,7 +67,7 @@ int main(){
   printf("   - Background noise : %5.2f \n",noise);
   printf("\n\nMonte-Carlo simulation is started...\n");
 
-  totcount = real(obs,n_source,theta,phi,offset,L,d,nofphot,noise,turn);
+  totcount = real(obs,n_source,theta,phi,nofphot,noise,turn);
   count = totcount;
   for(i=0;i<2000;i++) {
     init_obs[i] = obs[i];
@@ -88,10 +86,11 @@ int main(){
 
     printf("\nIteration %d\n\n",k+1);
  
-    st = corr(map,obs,L,d,offset);
-    n_source = loc_source(sources,map,banned,n_source,L);
+    st = corr(map,obs);
 
-    st = lsf(fit,init_obs,sources,n_source+2,L,d,offset);
+    n_source = loc_source(sources,map,banned,n_source);
+
+    st = lsf(fit,init_obs,sources,n_source+2);
 
     printf("Three highest is picked...\n");
 
@@ -115,8 +114,8 @@ int main(){
       }
     }
 
-    st = lsf(fit,init_obs,sources,n_source,L,d,offset);
-
+    st = lsf(fit,init_obs,sources,n_source);
+ 
     if(fit[n_source]<0.02){
       /*printf("Searching limit is reached. Sorting the sources...\n");
       --n_source;
@@ -177,7 +176,7 @@ int main(){
 	   ,fit[0]*totcount/(opening*turn),fit[0]*100);
             
     for(i=0;i<2000;i++) obs[i] = init_obs[i];
-    count = clean(obs,fit,sources,n_source,count,offset,L,d);
+    count = clean(obs,fit,sources,n_source,count);
 
     printf("Rest counts : %5.2f\n\n",count);
   }  

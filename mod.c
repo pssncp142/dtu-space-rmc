@@ -9,10 +9,15 @@ int main(){
   FILE* f;
   int i,j;
   double model[2000];
-  double phi=0.4;
-  double theta=0.2;
 
+  /*double phi=0.8;
+  double theta=0.3;
   mod(model,theta,phi);
+  */
+  double theta[] = {0.2,0.1};
+  double phi[] = {0.8,0.6};
+  double nofphot[] = {10000,1000};
+  real(model,1,theta,phi,nofphot,0,100);
   
   f=fopen("strip.txt","w+");
 

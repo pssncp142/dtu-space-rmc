@@ -153,6 +153,7 @@ int corr(double map[], double obs[]){
   for(i=0;i<sp*256;i++) sbtr_obs[i] = obs[i];
   st = subtmean(sbtr_obs,sp);
 
+  printf("%d \n",sp);
   
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){
@@ -178,7 +179,7 @@ int corr(double map[], double obs[]){
 
   for(i=0;i<256;i++){
     for(j=0;j<256;j++){
-      map[j*256+i] = data[(int)sp*grid_2+j*256+i];
+      map[j*256+i] = data[sp*grid_2+j*256+i];
     }
   }
   
@@ -190,12 +191,13 @@ int corr(double map[], double obs[]){
 //returns least square fitting result first sp data belongs to each strip sp+1 value is for total fit
 int lsf(double fit[], double obs[], double sources[], int n_source)
 {
+
   int i,j,k,l,st;
 
   double LHS[700] = {0};
   for(i=0;i<400;i++) fit[i] = 0;
   double model[2000]; double tmp_model[2000]; double tmp_obs[2000];
-   
+  
   for(i=0;i<sp*256;i++) tmp_obs[i] = obs[i];
   st = norm0_1(tmp_obs,sp);
 
@@ -258,7 +260,7 @@ double real(double obs[], int n_source, double* theta, double* phi, double* nofp
       for(i=0; i<256; i++){
 	rate[0] = model[i]; 
 	for(j=1; j<sp; j++){
-	  rate[j] = rate[j-1] + model[(j-1)*256+i];
+	  rate[j] = rate[j-1] + model[j*256+i];
 	}
 	rnd = (double)rand()/RAND_MAX;
 	for (j=0; j<1000; j++){
@@ -272,7 +274,7 @@ double real(double obs[], int n_source, double* theta, double* phi, double* nofp
 	  if(j==randphot){
 	    break;
 	  }
-	  rnd = (double)rand()/RAND_MAX*sp*opening;
+	  rnd = (double)rand()/RAND_MAX;
 	  for(k=0;k<sp;k++){
 	    if(rnd < rate[k]){
 	      ++obs[k*256+i]; break;}
@@ -326,8 +328,10 @@ int mod(double model[], double theta, double phi)
   theta *= PI;
   phi *= PI;
 
-  calc_angles(thetap,phip,theta,phi,alpha,beta);
+  calc_angles(thetap,phip,theta,phi);
+
   frac_detect(frac,thetap,phip);
+  //for(i=0;i<256;i++) frac[i] = 1;
 
   for(i=0; i<256; i++){
     for(j=0; j<sp; j++){
@@ -337,6 +341,10 @@ int mod(double model[], double theta, double phi)
 
   return 1;
 }
+
+/*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+//calculates the illuminated fraction of the detector for every iteration
+//(normalized to 1)
 
 int frac_detect(double frac[], double thetap[], double phip[]){
 
@@ -396,29 +404,24 @@ int frac_detect(double frac[], double thetap[], double phip[]){
 
 }
 
-int calc_angles(double thetap[], double phip[], double theta, double phi, double alpha, double beta){
+/*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+//returns the coordinates in the reference frame of tilted rotating mask
+
+int calc_angles(double thetap[], double phip[], double theta, double phi){
 
   int i;
-  double gamma;
-  double tel_axis[3], rot_axis[3], sun_axis[3], x_axis[3], source[3];
+  double tel_axis[3], x_axis[3], source[3];
   
   source[0] = sin(theta)*cos(phi); source[1] = sin(theta)*sin(phi); source[2] = cos(theta);
-  tel_axis[0] = sin(beta)*cos(0); tel_axis[1] = sin(beta)*sin(0); tel_axis[2] = cos(beta);
-  rot_axis[0] = 0.; rot_axis[1] = 0.; rot_axis[2] = 1.;
-  x_axis[0] = 1.; x_axis[1] = 0; x_axis[2] = 0;
-
-  vec_ort_wc(sun_axis,rot_axis,tel_axis);
-  vec_scap(-1,sun_axis);
-  vec_rotate(tel_axis,-alpha,sun_axis);
-  gamma = vec_angle(rot_axis,sun_axis,x_axis);
+  tel_axis[2] = cos(beta);
+  x_axis[2] = 0;
 
   for(i=0;i<256;i++){
     
-    tel_axis[0] = sin(beta)*cos(i*PI2_over_256+gamma);
-    tel_axis[1] = sin(beta)*sin(i*PI2_over_256+gamma);
+    tel_axis[0] = sin(beta)*cos(i*PI2_over_256+alpha_proj);
+    tel_axis[1] = sin(beta)*sin(i*PI2_over_256+alpha_proj);
     x_axis[0] = cos(i*PI2_over_256);
     x_axis[1] = sin(i*PI2_over_256);
-    x_axis[2] = 0;
 
     thetap[i] = acos(vec_dotp(tel_axis,source));
     phip[i] = vec_angle(tel_axis,x_axis,source);
