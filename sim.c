@@ -22,7 +22,7 @@ int main(){
   double max;
   double tmp_s[2];
   double opening = op();
-  int nofstrip;
+  int sp;
   double init_obs[2000]={0};
   double obs[2000]={0};
   double map[70000]={0};

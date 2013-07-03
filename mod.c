@@ -1,19 +1,18 @@
 #include "stdio.h"
 #include "common.h"
+#include "param.h"
 
 int main(){
   
+  configure();
+
   FILE* f;
-  int sp = n();
   int i,j;
   double model[2000];
   double phi=0.4;
   double theta=0.2;
-  double offset=0.2;
-  double L=20.;
-  double d=1.;
 
-  mod(model,theta,phi,offset,L,d);
+  mod(model,theta,phi);
   
   f=fopen("strip.txt","w+");
 
