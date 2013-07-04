@@ -135,10 +135,11 @@ int loc_source(double sources[], double map[], double banned[], int n_source){
 // k --> strip number
 // j --> jth grid on the y-axis
 // i --> ith grid on the x-axis
-int corr(double map[], double obs[]){  
+int corr(double map[], double obs[], int check){  
   
   int i,j,k,l,st;
   
+  FILE* f;
   double posx,posy;
   double theta,phi;
   double max_angle = PI/3;
@@ -150,31 +151,53 @@ int corr(double map[], double obs[]){
   double all_st = L*tan(max_angle)/(256*0.5);
   double L_2 = L*L;
   int grid_2 = 256*256; 
+  char *bin;
+
   for(i=0;i<sp*256;i++) sbtr_obs[i] = obs[i];
   st = subtmean(sbtr_obs,sp);
   
-  printf("Correlation process :      "); fflush(stdout);
 
-  for(i=0;i<256;i++){
-    if(0==i % 25) printf("\b\b\b\b\b%3d%% ",i/25*10); fflush(stdout);
-    for(j=0;j<256;j++){
-      posx = i*all_st+st_map;
-      posy = j*all_st+st_map;
-      theta = atan(sqrt((posx*posx+posy*posy)/(L_2)));
-      if(posx < 0 && posy > 0){
-	phi = atan(posy/posx) + PI;
-      }else if(posx < 0 && posy < 0){
-	phi = atan(posy/posx) - PI;
-      } else {
-	phi = atan(posy/posx);
-      }
-      st = mod(model,theta/PI,phi/PI);
-      st = subtmean(model,sp);
-      for(k=0;k<sp;k++){
-	data[k*grid_2+j*256+i] = mult3sum(model,sbtr_obs,obs,k);
+  if(check == 0){
+    f=fopen("mod_corr.bin","w+");
+    printf("Modulation function for all sky map will be written to : mod_corr.bin\n");
+    printf("Correlation process :      "); fflush(stdout);
+    for(i=0;i<256;i++){
+      if(0==i % 25) printf("\b\b\b\b\b%3d%% ",i/25*10); fflush(stdout);
+      for(j=0;j<256;j++){
+	posx = i*all_st+st_map;
+	posy = j*all_st+st_map;
+	theta = atan(sqrt((posx*posx+posy*posy)/(L_2)));
+	if(posx < 0 && posy > 0){
+	  phi = atan(posy/posx) + PI;
+	}else if(posx < 0 && posy < 0){
+	  phi = atan(posy/posx) - PI;
+	} else {
+	  phi = atan(posy/posx);
+	}
+	st = mod(model,theta/PI,phi/PI);
+	st = subtmean(model,sp);
+	fwrite(model,sizeof(double),256*sp,f);
+	for(k=0;k<sp;k++){
+	  data[k*grid_2+j*256+i] = mult3sum(model,sbtr_obs,obs,k);
+	}
       }
     }
+    fclose(f);
+  } else {
+    f=fopen("mod_corr.bin","r");
+    printf("Correlation process :      "); fflush(stdout);
+    for(i=0;i<256;i++){
+      if(0==i % 25) printf("\b\b\b\b\b%3d%% ",i/25*10); fflush(stdout);
+      for(j=0;j<256;j++){
+	fread(model,sizeof(double),256*sp,f);
+	for(k=0;k<sp;k++){
+	  data[k*grid_2+j*256+i] = mult3sum(model,sbtr_obs,obs,k);
+	}
+      }
+    }
+    fclose(f);
   }
+
   
   printf("\n\n");
 

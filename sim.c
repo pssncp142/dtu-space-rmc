@@ -85,7 +85,7 @@ int main(){
   again:
 
     printf("\nIteration %d\n\n",k+1);
-    st = corr(map,obs);
+    st = corr(map,obs,k);
 
     n_source = loc_source(sources,map,banned,n_source);
 
