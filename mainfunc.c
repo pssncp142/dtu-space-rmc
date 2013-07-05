@@ -368,15 +368,6 @@ int mod(double model[], double theta, double phi)
 }
 
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
-// effective area of the mask changes with theta and phi
-
-int thickness(double frac[], double thetap[], double phip[]){
-  
-  
-
-}
-
-/*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
 //calculates the illuminated fraction of the detector for every iteration
 //(normalized to 1)
 
@@ -439,7 +430,7 @@ int frac_detect(double frac[], double thetap[], double phip[]){
   }
 
   //effective area
-  for(i=0;i<256;i++) frac[i] *= cos(theta[i]);
+  for(i=0;i<256;i++) frac[i] *= cos(theta[i])*(1-thick*sin(thetap[i])*cos(phip[i]));
 
   return 1;
 

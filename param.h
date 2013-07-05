@@ -2,6 +2,7 @@ double L,d,offset;
 double det,mask,height;
 double alpha,beta,alpha_proj;
 double opening;
+double thick;
 int sp;
 
 double PI2_over_256;

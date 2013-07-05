@@ -12,6 +12,7 @@ extern double L,d,offset;
 extern double det,mask,height;
 extern double alpha,beta,alpha_proj;
 extern double opening;
+extern double thick;
 extern int sp;
 
 //some constants to fasten simulation
@@ -32,6 +33,7 @@ int configure(){
   det    = 55; 
   mask   = 85; 
   height = 20;
+  thick = 0.5;
   alpha  = 0.25*PI;
   beta   = 1e-20*PI;
   sp     = n();
