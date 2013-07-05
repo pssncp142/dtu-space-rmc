@@ -430,7 +430,7 @@ int frac_detect(double frac[], double thetap[], double phip[]){
   }
 
   //effective area
-  for(i=0;i<256;i++) frac[i] *= cos(theta[i])*(1-thick*sin(thetap[i])*cos(phip[i]));
+  for(i=0;i<256;i++) frac[i] *= cos(thetap[i])*(1-thick*sin(thetap[i])*cos(phip[i]));
 
   return 1;
 
