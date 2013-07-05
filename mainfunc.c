@@ -367,8 +367,13 @@ int mod(double model[], double theta, double phi)
   return 1;
 }
 
-int thickness(){
+/*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
+// effective area of the mask changes with theta and phi
+
+int thickness(double frac[], double thetap[], double phip[]){
   
+  
+
 }
 
 /*oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo*/
@@ -432,6 +437,9 @@ int frac_detect(double frac[], double thetap[], double phip[]){
     }
   exit: ;
   }
+
+  //effective area
+  for(i=0;i<256;i++) frac[i] *= cos(theta[i]);
 
   return 1;
 
