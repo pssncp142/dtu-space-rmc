@@ -24,29 +24,32 @@ extern double det_2_sq;
 extern double offset_PI[6];
 extern double sp_2;
 
-int configure(){
+int configure(int a){
   int i;
 
-  L      = 20; 
-  d      = 1; 
-  offset = 0.;
-  det    = 55; 
-  mask   = 85; 
-  height = 20;
-  thick = 0.5;
-  alpha  = 0.25*PI;
-  beta   = 1e-20*PI;
-  sp     = n();
-  opening= op();
+  if(a){
+    L      = 20; 
+    d      = 1; 
+    offset = 0.25;
+    det    = 55; 
+    mask   = 85; 
+    height = 20;
+    thick  = 0.;
+    alpha  = 0.*PI;
+    beta   = 1e-20*PI;
+    sp     = n();
+    opening= op();
   
-  PI2_over_256 = 2*PI/256;
-  PIL_over_d   = PI*L/d;
-  st_ob        = sp*opening;
-  det_2        = det;
-  det_2_sq     = pow(det_2,2);
-  det         *= 0.5;
-  mask        *= 0.5;
-  sp_2         = sp*sp;
+    PI2_over_256 = 2*PI/256;
+    PIL_over_d   = PI*L/d;
+    st_ob        = sp*opening;
+    det_2        = det;
+    det_2_sq     = pow(det_2,2);
+    det         *= 0.5;
+    mask        *= 0.5;
+    sp_2         = sp*sp;
+
+  }
 
   for(i=0;i<6;i++) offset_PI[i] = (offset+i)*PI;
 
@@ -61,4 +64,5 @@ int configure(){
   vec_rotate(tel_axis,-alpha,sun_axis);
   alpha_proj = vec_angle(rot_axis,sun_axis,x_axis);
 
+  return 0;
 }

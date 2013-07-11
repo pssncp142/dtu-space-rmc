@@ -70,8 +70,9 @@ int loc_source(double sources[], double map[], double banned[], int n_source){
   
   int i,j,k,l,m,n,st;
 
-  int x_ndx[5], y_ndx[5];
-  int range=8,search=3,same;
+  int x_ndx[5]={0};
+  int y_ndx[5]={0};
+  int range=5,search=3,same;
   double max, sum, max_angle=PI/3;
   double posx[5]={0};
   double posy[5]={0}; 
@@ -99,7 +100,6 @@ int loc_source(double sources[], double map[], double banned[], int n_source){
 	}
       }
     }
-    
     for(i=-1;i<2;i++){
       for(j=-1;j<2;j++){
 	posx[k] += (((x_ndx[k]+i)-256*0.5)*L*tan(max_angle)/(256*0.5)+0.5*L*tan(max_angle)/(256*0.5))*map[(y_ndx[k]+j)*256+(x_ndx[k]+i)];
@@ -107,7 +107,6 @@ int loc_source(double sources[], double map[], double banned[], int n_source){
 	sum += map[(y_ndx[k]+j)*256+(x_ndx[k]+i)];
       }
     }
-
     posx[k] /= sum;
     posy[k] /= sum;
 
@@ -119,7 +118,6 @@ int loc_source(double sources[], double map[], double banned[], int n_source){
     } else {
       sources[2*(n_source+k)+1] = atan(posy[k]/posx[k])/PI;
     }
-
     sources[2*(n_source+k)+6] = x_ndx[k];
     sources[2*(n_source+k)+7] = y_ndx[k];
   
@@ -135,7 +133,7 @@ int loc_source(double sources[], double map[], double banned[], int n_source){
 // k --> strip number
 // j --> jth grid on the y-axis
 // i --> ith grid on the x-axis
-int corr(double map[], double obs[], int check){  
+int corr(double map[], double obs[], int check, char fname[]){  
   
   int i,j,k,l,st;
   
@@ -158,8 +156,8 @@ int corr(double map[], double obs[], int check){
   
 
   if(check == 0){
-    f=fopen("mod_corr.bin","w+");
-    printf("Modulation function for all sky map will be written to : mod_corr.bin\n");
+    f=fopen(fname,"w+");
+    printf("Modulation function for all sky map will be written to : %s \n",fname);
     printf("Correlation process :      "); fflush(stdout);
     for(i=0;i<256;i++){
       if(0==i % 25) printf("\b\b\b\b\b%3d%% ",i/25*10); fflush(stdout);
@@ -184,7 +182,7 @@ int corr(double map[], double obs[], int check){
     }
     fclose(f);
   } else {
-    f=fopen("mod_corr.bin","r");
+    f=fopen(fname,"r");
     printf("Correlation process :      "); fflush(stdout);
     for(i=0;i<256;i++){
       if(0==i % 25) printf("\b\b\b\b\b%3d%% ",i/25*10); fflush(stdout);
@@ -430,7 +428,7 @@ int frac_detect(double frac[], double thetap[], double phip[]){
   }
 
   //effective area
-  for(i=0;i<256;i++) frac[i] *= cos(theta[i])*(1-thick*sin(thetap[i])*cos(phip[i]));
+  for(i=0;i<256;i++) frac[i] *= cos(thetap[i])*(1-thick*sin(thetap[i])*cos(phip[i]));
 
   return 1;
 

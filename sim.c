@@ -4,7 +4,7 @@
 #include "time.h"
 
 #define PI 3.14159f
-#define RANDOM_SKY 1
+#define RANDOM_SKY  0
 
 #include "common.h"
 #include "param.h"
@@ -15,9 +15,10 @@ double max_angle = PI/3;
 
 int main(){
 
-  configure();
+  configure(1);
   
   FILE* f;
+  char fname[]="data/mod_corr.bin";
   int i,j,k,m,n,ndx,x_ndx,y_ndx,found,st,range=4;
   double max;
   double tmp_s[2];
@@ -30,14 +31,14 @@ int main(){
   double sources[100]={0};
   double count,totcount;
   double theta[20] = 
-    {0.2,0.2,0.3,0.2,0.1,0.15,0.3,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    {0.15,0.15,0.3,0.2,0.1,0.15,0.3,0,0,0,0,0,0,0,0,0,0,0,0,0};
   double phi[20] = 
-    {0.8,0.2,0.7,-0.2,1.5,1,0.4,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    {0.67,1.33,0.7,-0.2,1.5,1,0.4,0,0,0,0,0,0,0,0,0,0,0,0,0};
   double nofphot[20] = 
-    {10000,1000,1200,900,900,1500,700,0,0,0,0,0,0,0,0,0,0,0,0,0};
-  double noise = 10000.;
-  int n_source = 10;
-  int turn = 100;
+    {200,40,1200,900,900,1500,700,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  double noise = 800.;
+  int n_source = 2;
+  int turn = 150;
 
 #if RANDOM_SKY == 1
   random_sky(theta,phi,nofphot,n_source);
@@ -61,7 +62,7 @@ int main(){
   for(i=0;i<n_source;i++) totcount += nofphot[i];
 
   for(i=0;i<n_source;i++){
-    printf("    - %2d --> Theta : %5.2f*PI    Phi : %5.2f*PI    Intensity : %7.2f   Relative : %5.2f perc\n"
+    printf("    - %2d --> Theta : %6.3f*PI    Phi : %6.3f*PI    Intensity : %7.3f   Relative : %5.2f perc\n"
 	   ,i+1,theta[i],phi[i],nofphot[i],nofphot[i]*100/totcount);
   }
   printf("   - Background noise : %5.2f \n",noise);
@@ -85,7 +86,7 @@ int main(){
   again:
 
     printf("\nIteration %d\n\n",k+1);
-    st = corr(map,obs,k);
+    st = corr(map,obs,1,fname);
 
     n_source = loc_source(sources,map,banned,n_source);
 
