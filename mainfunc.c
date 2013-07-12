@@ -183,9 +183,9 @@ int corr(double map[], double obs[], int check, char fname[]){
     fclose(f);
   } else {
     f=fopen(fname,"r");
-    printf("Correlation process :      "); fflush(stdout);
+    //printf("Correlation process :      "); fflush(stdout);
     for(i=0;i<256;i++){
-      if(0==i % 25) printf("\b\b\b\b\b%3d%% ",i/25*10); fflush(stdout);
+      //if(0==i % 25) printf("\b\b\b\b\b%3d%% ",i/25*10); fflush(stdout);
       for(j=0;j<256;j++){
 	fread(model,sizeof(double),256*sp,f);
 	for(k=0;k<sp;k++){
@@ -197,7 +197,7 @@ int corr(double map[], double obs[], int check, char fname[]){
   }
 
   
-  printf("\n\n");
+  //printf("\n\n");
 
   norm1_1(data,sp);
 

@@ -25,9 +25,11 @@ extern double offset_PI[6];
 extern double sp_2;
 
 int configure(int a){
+
   int i;
 
   if(a){
+
     L      = 20; 
     d      = 1; 
     offset = 0.25;
@@ -36,7 +38,7 @@ int configure(int a){
     height = 20;
     thick  = 0.;
     alpha  = 0.*PI;
-    beta   = 1e-20*PI;
+    beta   = -0.005; //1e-20*PI;
     sp     = n();
     opening= op();
   
