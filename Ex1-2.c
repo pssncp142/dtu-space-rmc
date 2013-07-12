@@ -5,6 +5,7 @@
 #include "common.h"
 #include "param.h"
 
+int x[2],y[2],z[2];
 int progress(int a, int b, int c);
 
 int main(){
@@ -32,19 +33,21 @@ int main(){
   int found;
   int n_source = 2;
   int turn = 1;
+  x[0]=0; x[1]=3;
+  y[0]=0; y[1]=100;
+  z[0]=0; z[1]=2000;
 
-  for(o=2;o<3;o++){
+  for(o=x[0];o<x[1];o++){
     beta = off[o];
     f_corr[10] = 48 + o;
     f_out[10] = 48 + o;
     configure(0);
-    for(i=0;i<100;i++){
+    for(i=y[0];i<y[1];i++){
       f_out[12] = ((int)(turn+i)/100) + 48;
       f_out[13] = ((int)((turn+i)%100)/10) + 48;
       f_out[14] = ((int)((turn+i)%10)) + 48;
-      //printf("%s\n",f_out);
       f = fopen(f_out,"w+");
-      for(l=0;l<2000;l++){
+      for(l=z[0];l<z[1];l++){
 	progress(o,i,l);
 	tcnt = real(init_obs,n_source,theta,phi,nofphot,noise,turn+i);
 	for(j=0;j<2000;j++) obs[j] = init_obs[j];
@@ -69,7 +72,7 @@ int main(){
 	fwrite(sources,sizeof(double),4,f);
 	for(k=0;k<70000;k++) banned[k]=0;
 	
-      }
+	}
       fclose(f);
     }
   }
@@ -82,7 +85,8 @@ int main(){
 int progress(int a, int b, int c){
   
   int i;
-  double perc = (b*2000.+c)*100/(2000.*100.-1);
+  double perc = ((double)a*(z[1]-z[0])*(y[1]-y[0])+b*(z[1]-z[0])+c)*100
+    /((x[1]-x[0])*(y[1]-y[0])*(z[1]-z[0])-1);
 
   printf("\r[");
   

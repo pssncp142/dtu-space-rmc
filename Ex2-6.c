@@ -23,33 +23,33 @@ int main(){
   double init_obs[2000]={0};
   double fit[200]={0};
   double sources[100]={0};
-  double theta[2] = {0.15,0.15};
-  double phi[2] = {1.33,0.67};
-  double nofphot[2] = {200,40};
+  double theta[3] = {0.15,0.15,0.11};
+  double phi[3] = {1.33,0.67,0};
+  double nofphot[3] = {200,40,10};
   double noise = 800;
   double off[3] = {1e-20*PI,0.005,-0.005};
   double tcnt,cnt;
   double max;
   int found;
+  double keep = nofphot[2];
   int n_source = 2;
-  int turn = 1;
+  int turn[] = {1,10,100,4000};
   x[0]=0; x[1]=3;
   y[0]=0; y[1]=100;
   z[0]=0; z[1]=2000;
 
   for(o=x[0];o<x[1];o++){
-    beta = off[o];
-    f_corr[10] = 48 + o;
-    f_out[10] = 48 + o;
+    nofphot[2] = keep + 4*o;
+    f_out[12] = ((int)((int)nofphot[2])/100) + 48;
+    f_out[13] = ((int)(((int)nofphot[2])%100)/10) + 48;
+    f_out[14] = ((int)(((int)nofphot[2])%10)) + 48;
     configure(0);
     for(i=y[0];i<y[1];i++){
-      f_out[12] = ((int)(turn+i)/100) + 48;
-      f_out[13] = ((int)((turn+i)%100)/10) + 48;
-      f_out[14] = ((int)((turn+i)%10)) + 48;
+      f_out[10] = 48 + i;
       f = fopen(f_out,"w+");
       for(l=z[0];l<z[1];l++){
 	progress(o,i,l);
-	tcnt = real(init_obs,n_source,theta,phi,nofphot,noise,turn+i);
+	tcnt = real(init_obs,n_source,theta,phi,nofphot,noise,turn[i]);
 	for(j=0;j<2000;j++) obs[j] = init_obs[j];
 	for(j=0;j<4;j++){
 	  corr(map,obs,1,f_corr);
@@ -60,8 +60,6 @@ int main(){
 	      banned[((int)sources[2*(j)+7]+n)*256+((int)sources[2*(j)+6]+m)]=1;
 	    }
 	  }
-	  //printf("%f %f \n ",sources[2*j],sources[2*j+1]);
-	  //printf("%f\n",fit[j+1]);
 	  if(fit[j+1]<0.025){
 	    break;
 	  }
