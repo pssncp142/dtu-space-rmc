@@ -45,7 +45,7 @@ int main(){
       f = fopen(f_out,"w+");
       for(l=0;l<2000;l++){
 	progress(o,i,l);
-	/*tcnt = real(init_obs,n_source,theta,phi,nofphot,noise,turn+i);
+	tcnt = real(init_obs,n_source,theta,phi,nofphot,noise,turn+i);
 	for(j=0;j<2000;j++) obs[j] = init_obs[j];
 	for(j=0;j<4;j++){
 	  corr(map,obs,1,f_corr);
@@ -67,7 +67,7 @@ int main(){
 	fwrite(&j,sizeof(int),1,f);
 	fwrite(sources,sizeof(double),4,f);
 	for(k=0;k<70000;k++) banned[k]=0;
-	*/
+	
       }
       fclose(f);
     }
