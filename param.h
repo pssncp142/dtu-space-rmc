@@ -13,4 +13,4 @@ double det_2_sq;
 double offset_PI[6];
 double sp_2;
 
-int configure();
+int configure(int a);
