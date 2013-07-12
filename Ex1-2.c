@@ -33,7 +33,7 @@ int main(){
   int n_source = 2;
   int turn = 1;
 
-  for(o=0;o<3;o++){
+  for(o=2;o<3;o++){
     beta = off[o];
     f_corr[10] = 48 + o;
     f_out[10] = 48 + o;
@@ -82,7 +82,7 @@ int main(){
 int progress(int a, int b, int c){
   
   int i;
-  double perc = (a*2000.*100+b*2000+c)*100/(2000*100*3-1);
+  double perc = (b*2000.+c)*100/(2000.*100.-1);
 
   printf("\r[");
   
