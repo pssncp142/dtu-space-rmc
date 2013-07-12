@@ -13,7 +13,7 @@ int lsf(double*,double*,double*,int);
 int loc_source(double*,double*,double*,int);
 int mod(double*,double,double);
 double real(double*,int,double*,double*,double*,double,int);
-int corr(double*,double*,int); 
+int corr(double*,double*,int,char*); 
 double clean(double*,double*,double*,int,double);
 int calc_angles(double*,double*,double,double);
 int frac_detect(double*,double*,double*);
