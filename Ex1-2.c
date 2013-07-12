@@ -31,7 +31,7 @@ int main(){
   double max;
   int found;
   int n_source = 2;
-  int turn = 80;
+  int turn = 1;
 
   for(o=0;o<3;o++){
     beta = off[o];
@@ -42,6 +42,7 @@ int main(){
       f_out[12] = ((int)(turn+i)/100) + 48;
       f_out[13] = ((int)((turn+i)%100)/10) + 48;
       f_out[14] = ((int)((turn+i)%10)) + 48;
+      //printf("%s\n",f_out);
       f = fopen(f_out,"w+");
       for(l=0;l<2000;l++){
 	progress(o,i,l);

@@ -31,7 +31,7 @@ int main(){
   double max;
   int found;
   int n_source = 2;
-  int turn = 80;
+  int turn = 1;
 
   for(o=0;o<3;o++){
     beta = off[o];
