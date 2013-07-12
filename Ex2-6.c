@@ -16,7 +16,7 @@ int main(){
   int i,j,k,l,m,n,o;
   int range = 4;
   char f_corr[] = "cor/Ex1-6-0.bin";
-  char f_out[] = "res/Ex1-6-0-000.bin";
+  char f_out[] = "res/Ex2-6-0-000.bin";
   double map[70000] = {0};
   double banned[70000] = {0};
   double obs[2000]={0};
