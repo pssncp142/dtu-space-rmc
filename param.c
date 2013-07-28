@@ -36,9 +36,9 @@ int configure(int a){
     det    = 55; 
     mask   = 85; 
     height = 20;
-    thick  = 0.;
-    alpha  = 0.*PI;
-    beta   = -0.005; //1e-20*PI;
+    thick  = 0.2;
+    alpha  = 0.1*PI;
+    beta   = 0.3*PI;
     sp     = n();
     opening= op();
   

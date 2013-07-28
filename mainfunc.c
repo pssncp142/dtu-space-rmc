@@ -354,7 +354,7 @@ int mod(double model[], double theta, double phi)
   calc_angles(thetap,phip,theta,phi);
 
   frac_detect(frac,thetap,phip);
-  //for(i=0;i<256;i++) frac[i] = 1;
+  for(i=0;i<256;i++) frac[i] = 1;
 
   for(i=0; i<256; i++){
     for(j=0; j<sp; j++){
@@ -376,8 +376,8 @@ int frac_detect(double frac[], double thetap[], double phip[]){
   double pos[4];
   double t_c_h, t_s_h;
   for(i=0;i<256;i++){
-    t_c_h = tan(thetap[i])*cos(i*PI2_over_256-phip[i])*height;
-    t_s_h = tan(thetap[i])*sin(i*PI2_over_256-phip[i])*height;
+    t_c_h = tan(thetap[i])*cos(phip[i])*height;
+    t_s_h = tan(thetap[i])*sin(phip[i])*height;
     pos[0] = mask-t_c_h;
     pos[1] = -mask-t_c_h;
     pos[2] = mask-t_s_h;
@@ -428,7 +428,8 @@ int frac_detect(double frac[], double thetap[], double phip[]){
   }
 
   //effective area
-  for(i=0;i<256;i++) frac[i] *= cos(thetap[i])*(1-thick*sin(thetap[i])*cos(phip[i]));
+  for(i=0;i<256;i++)
+    frac[i] *= cos(thetap[i])*(1-thick/d*pow(cos(phip[i]),2));
 
   return 1;
 
@@ -442,6 +443,7 @@ int calc_angles(double thetap[], double phip[], double theta, double phi){
   int i;
   double tel_axis[3], x_axis[3], source[3];
   double s_beta = sin(beta);
+  double s_beta_PI = sin(beta+PI);
   
   source[0] = sin(theta)*cos(phi); source[1] = sin(theta)*sin(phi); source[2] = cos(theta);
   tel_axis[2] = cos(beta);
