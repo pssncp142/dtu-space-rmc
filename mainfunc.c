@@ -51,7 +51,7 @@ double clean(double obs[], double fit[], double sources[], int n_source, double 
   double max=-1;
  
   for(j=0;j<n_source;j++){
-    st = mod(model,sources[j*2],sources[j*2+1]);
+    st = mod(model,sources[j*2],sources[j*2+1],1);
     for(i=0;i<sp*256;i++) obs[i] -= fit[j+1]*model[i]*count/256;
     count -= fit[j+1]*count;
   }
@@ -133,7 +133,7 @@ int loc_source(double sources[], double map[], double banned[], int n_source){
 // k --> strip number
 // j --> jth grid on the y-axis
 // i --> ith grid on the x-axis
-int corr(double map[], double obs[], int check, char fname[]){  
+int corr(double map[], double obs[], int check, int type, char fname[]){  
   
   int i,j,k,l,st;
   
@@ -172,7 +172,7 @@ int corr(double map[], double obs[], int check, char fname[]){
 	} else {
 	  phi = atan(posy/posx);
 	}
-	st = mod(model,theta/PI,phi/PI);
+	st = mod(model,theta/PI,phi/PI,type);
 	st = subtmean(model,sp);
 	fwrite(model,sizeof(double),256*sp,f);
 	for(k=0;k<sp;k++){
@@ -229,7 +229,7 @@ int lsf(double fit[], double obs[], double sources[], int n_source)
   fit[0] = (1./256)/(sp);
  
   for(j=1;j<n_source+1;j++){
-    st = mod(model,sources[(j-1)*2],sources[(j-1)*2+1]);
+    st = mod(model,sources[(j-1)*2],sources[(j-1)*2+1],1);
     st = norm0_1(model,sp);
     for(i=0;i<256*sp;i++){
       fit[j] += (tmp_obs[i]*model[i])/(sp_2);
@@ -238,7 +238,7 @@ int lsf(double fit[], double obs[], double sources[], int n_source)
       LHS[j*(n_source+1)+j] += pow(model[i],2)/(sp_2);
     }
     for(k=j+1;k<n_source+1;k++){
-      st = mod(tmp_model,sources[(k-1)*2],sources[(k-1)*2+1]);
+      st = mod(tmp_model,sources[(k-1)*2],sources[(k-1)*2+1],1);
       st = norm0_1(tmp_model,sp);
       for(i=0;i<256*sp;i++){
 	LHS[j*(n_source+1)+k] += (tmp_model[i]*model[i])/(sp_2);
@@ -274,7 +274,7 @@ double real(double obs[], int n_source, double* theta, double* phi, double* nofp
   srand(time(NULL));
 
   for(m=0;m<n_source;m++){
-    mod(model,theta[m],phi[m]); 
+    mod(model,theta[m],phi[m],1); 
     var = nofphot[m]*opening/256;
     prob[0] = exp(-var);
     for(l=1; l<1000; l++){
@@ -343,7 +343,7 @@ double real(double obs[], int n_source, double* theta, double* phi, double* nofp
 //data[256*j+i]
 // j --> strip number
 // i --> related phase bin
-int mod(double model[], double theta, double phi) 
+int mod(double model[], double theta, double phi, int type) 
 {
   int i,j,k,st;  
   
@@ -354,7 +354,7 @@ int mod(double model[], double theta, double phi)
   calc_angles(thetap,phip,theta,phi);
 
   frac_detect(frac,thetap,phip);
-  for(i=0;i<256;i++) frac[i] = 1;
+  if (type == 0) for(i=0;i<256;i++) frac[i] = 1;
 
   for(i=0; i<256; i++){
     for(j=0; j<sp; j++){

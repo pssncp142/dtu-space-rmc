@@ -7,10 +7,10 @@
 int main(){
   
   configure(1);
-  offset = 0.;
+  offset = 0.25;
   thick = 0.;
-  alpha = -0.75*PI;
-  beta = 0.1*PI;
+  alpha = -0.*PI;
+  beta = 1e-20*PI;
 //alpha = 0.5*PI;
   configure(0);
 
@@ -19,13 +19,13 @@ int main(){
   double model[2000];
   double map[70000];
 
-  double phi=0.4;
-  double theta=0.2;
-  mod(model,theta,phi);
-  /*double theta[] = {0.2,0.1};
-  double phi[] = {0.8,0.6};
-  double nofphot[] = {10000,1000};
-  real(model,1,theta,phi,nofphot,0,100);*/
+  //double phi=0.4;
+  //double theta=0.3;
+  //mod(model,theta,phi);
+  double theta[] = {0.3,0.1};
+  double phi[] = {1.2,0.6};
+  double nofphot[] = {100,1000};
+  real(model,1,theta,phi,nofphot,1000,100);
   
   f=fopen("strip.txt","w+");
 
@@ -37,7 +37,7 @@ int main(){
   }
   fclose(f);
 
-  /*corr(map,model,0,"asd");
+  corr(map,model,0,0,"asd");
 
   f=fopen("corr.txt","w+");
   
@@ -47,9 +47,9 @@ int main(){
     }
     fprintf(f,"\n");
   }
-  fclose(f);*/
+  fclose(f);
 
-  system("./plot.py");
+  //system("./plot.py");
 
   return 1;
 }
