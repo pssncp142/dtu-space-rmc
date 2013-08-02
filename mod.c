@@ -1,17 +1,20 @@
 #include "stdio.h"
 #include "common.h"
 #include "param.h"
+#include "math.h"
 
 #define PI 3.14159f
+
+double mean(double*);
 
 int main(){
   
   configure(1);
   offset = 0.25;
+  L = 20;
   thick = 0.;
   alpha = -0.*PI;
   beta = 1e-20*PI;
-//alpha = 0.5*PI;
   configure(0);
 
   FILE* f;
@@ -22,10 +25,10 @@ int main(){
   //double phi=0.4;
   //double theta=0.3;
   //mod(model,theta,phi);
-  double theta[] = {0.3,0.1};
-  double phi[] = {1.2,0.6};
-  double nofphot[] = {100,1000};
-  real(model,1,theta,phi,nofphot,1000,100);
+  double theta[] = {0.17,0.1,0.1,0.15,0.05,0.25};
+  double phi[] = {1.2,0.6,1.5,1.7,0.2,0.8};
+  double nofphot[] = {50,60,70,80,40,70};
+  real(model,0,theta,phi,nofphot,800,200);
   
   f=fopen("strip.txt","w+");
 
@@ -37,7 +40,7 @@ int main(){
   }
   fclose(f);
 
-  corr(map,model,0,0,"asd");
+  corr(map,model,1,0,"asd");
 
   f=fopen("corr.txt","w+");
   
@@ -49,7 +52,29 @@ int main(){
   }
   fclose(f);
 
+  printf("%f\n",mean(map));
+
   //system("./plot.py");
 
   return 1;
+}
+
+double mean(double *map){
+  double tot = 0;
+  double rms;
+  int i,j,k,l;
+  int range=5;
+  
+  for(i=range;i<256-range;i++){
+    for(j=range;j<256-range;j++){
+       rms = 0;
+       for(k=i-range;k<i+range;k++){
+	 for(l=j-range;l<j+range;l++){
+	   rms += pow(map[k*256+l]-map[i*256+j],2);
+	 }
+       }
+       tot += rms/(pow(range*2+1,2)-1);
+     }
+  }
+  return tot/(256*256);
 }
