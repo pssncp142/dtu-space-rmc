@@ -10,51 +10,56 @@ double mean(double*);
 int main(){
   
   configure(1);
-  offset = 0.25;
+  offset = 0.0;
   L = 20;
   thick = 0.;
   alpha = -0.*PI;
   beta = 1e-20*PI;
+  //sp = 1;
   configure(0);
 
   FILE* f;
-  int i,j;
+  int i,j,k;
   double model[2000];
   double map[70000];
 
-  //double phi=0.4;
-  //double theta=0.3;
-  //mod(model,theta,phi);
-  double theta[] = {0.17,0.1,0.1,0.15,0.05,0.25};
+  //double phi=0.5;
+  //double theta=0.2;
+  //mod(model,theta,phi,0);
+  double theta[] = {0.1,0.1,0.1,0.15,0.05,0.25};
   double phi[] = {1.2,0.6,1.5,1.7,0.2,0.8};
-  double nofphot[] = {50,60,70,80,40,70};
-  real(model,0,theta,phi,nofphot,800,200);
-  
+  double nofphot[] = {70,60,70,80,40,70};
+
+
+  for(k=0;k<50;k++){
+
+  real(model,1,theta,phi,nofphot,1000,100);  
   f=fopen("strip.txt","w+");
 
-  for(j=0;j<256;j++){
-    for(i=0;i<sp;i++){
-      fprintf(f,"%f ",model[i*256+j]);
+    for(j=0;j<256;j++){
+      for(i=0;i<sp;i++){
+	fprintf(f,"%f ",model[i*256+j]);
+      }
+      fprintf(f,"\n");
     }
-    fprintf(f,"\n");
-  }
-  fclose(f);
-
-  corr(map,model,1,0,"asd");
-
-  f=fopen("corr.txt","w+");
-  
-  for(j=0;j<256;j++){
-    for(i=0;i<256;i++){
-      fprintf(f,"%f ",map[i*256+j]);
+    fclose(f);
+    
+    corr(map,model,k,0,"asd");
+    
+    f=fopen("corr.txt","w+");
+    
+    for(j=0;j<256;j++){
+      for(i=0;i<256;i++){
+	fprintf(f,"%f ",map[i*256+j]);
+      }
+      fprintf(f,"\n");
     }
-    fprintf(f,"\n");
+    fclose(f);
+    
+    printf("%f\n",mean(map));
+
   }
-  fclose(f);
-
-  printf("%f\n",mean(map));
-
-  //system("./plot.py");
+    //system("./plot.py");
 
   return 1;
 }

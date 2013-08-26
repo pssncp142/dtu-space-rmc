@@ -152,8 +152,7 @@ int corr(double map[], double obs[], int check, int type, char fname[]){
   char *bin;
 
   for(i=0;i<sp*256;i++) sbtr_obs[i] = obs[i];
-  st = subtmean(sbtr_obs,sp);
-  
+  st = subtmean(sbtr_obs,sp);  
 
   if(check == 0){
     f=fopen(fname,"w+");
